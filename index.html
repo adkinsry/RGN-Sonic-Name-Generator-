@@ -456,31 +456,51 @@ function tick(pan) {
   if (now - lastTickAt < 0.028) return;
   lastTickAt = now;
   const src = ac.createBufferSource(); src.buffer = noiseBuf;
-  const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2600; bp.Q.value = 3;
+  const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2600; bp.Q.value = 1.5;
   const g = ac.createGain();
-  g.gain.setValueAtTime(0.35, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+  // Levels are measured, not guessed (see HANDOFF): this puts the clack near peak 0.3.
+  g.gain.setValueAtTime(1.6, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
   const p = panner(pan);
   src.connect(bp).connect(g).connect(p).connect(master);
   src.start(now, Math.random() * 0.4, 0.04);
 }
 
-function playBuffer(buf, when, pan, vol) {
-  const s = ac.createBufferSource(); s.buffer = buf;
-  const g = ac.createGain(); g.gain.value = vol;
+// Uploaded clips are level-matched to the built-in sounds when decoded. The built-in
+// jingle measures about -18 dBFS RMS and the ring accent about -26; a typical exported
+// clip sits near -14 with peaks at 1.0, so raw playback drowned the wheel clicks.
+const TARGET_DB = { Jingle: -18, "Ring sound": -26 };
+function clipGain(buf, targetDb) {
+  let peak = 0, sum = 0, n = 0;
+  for (let c = 0; c < buf.numberOfChannels; c++) {
+    const d = buf.getChannelData(c);
+    let a = 0, z = d.length - 1;
+    while (a < z && Math.abs(d[a]) < 0.01) a++;   // trim leading and trailing silence
+    while (z > a && Math.abs(d[z]) < 0.01) z--;
+    for (let i = a; i <= z; i++) { const v = d[i]; sum += v * v; n++; if (Math.abs(v) > peak) peak = Math.abs(v); }
+  }
+  if (!n || peak === 0) return 1;
+  const rms = Math.sqrt(sum / n);
+  let g = Math.pow(10, targetDb / 20) / rms;
+  g = Math.min(g, 0.95 / peak);                  // never let the matched clip clip
+  return Math.min(20, Math.max(0.02, g));
+}
+function playBuffer(clip, when, pan) {
+  const s = ac.createBufferSource(); s.buffer = clip.buf;
+  const g = ac.createGain(); g.gain.value = clip.gain;
   s.connect(g).connect(panner(pan)).connect(master);
   s.start(when);
 }
 
 // Ring pickup: two quick bright square-wave notes, alternating left and right.
 function ring(when, pan) {
-  if (customRing) return playBuffer(customRing, when, pan, 0.8);
+  if (customRing) return playBuffer(customRing, when, pan);
   [["E6", 0, 0.07], ["B6", 0.065, 0.32]].forEach(([n, off, len]) => {
     const t = when + off;
     const o = ac.createOscillator(); o.type = "square"; o.frequency.value = hz(n);
     const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 5200;
     const g = ac.createGain();
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(0.07, t + 0.004);
+    g.gain.linearRampToValueAtTime(0.18, t + 0.004);
     g.gain.exponentialRampToValueAtTime(0.0008, t + len);
     o.connect(lp).connect(g).connect(panner(pan)).connect(master);
     o.start(t); o.stop(t + len + 0.02);
@@ -523,7 +543,7 @@ function drum(t, kind) {
   src.start(t, 0, kind === "c" ? 0.95 : 0.15);
 }
 function jingle(t0) {
-  if (customJingle) return playBuffer(customJingle, t0, 0, 0.9);
+  if (customJingle) return playBuffer(customJingle, t0, 0);
   voice(LEAD, "square", 0.075, t0, true);
   voice(BASS, "triangle", 0.22, t0, false);
   for (let i = 0; i < 16; i += 2) { drum(t0 + i * STEP, "k"); drum(t0 + (i + 1) * STEP, "s"); }
@@ -966,8 +986,10 @@ function loadClip(input, label, assign) {
     if (!a) { showClipStatus("This browser has no Web Audio support, so custom clips can't play."); return; }
     try {
       const buf = await a.decodeAudioData(await f.arrayBuffer());
-      assign(buf);
-      clipNotes[label] = `${label}: using "${f.name}" (${buf.duration.toFixed(1)} s).`;
+      const gain = clipGain(buf, TARGET_DB[label]);
+      assign({ buf, gain });
+      const db = Math.round(20 * Math.log10(gain));
+      clipNotes[label] = `${label}: using "${f.name}" (${buf.duration.toFixed(1)} s, level ${db >= 0 ? "+" : ""}${db} dB to match).`;
       showClipStatus();
     } catch (e) {
       input.value = ""; // don't leave a file name showing that isn't in use
