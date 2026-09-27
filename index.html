@@ -192,20 +192,35 @@ body {
 .go:hover:not(:disabled) { transform: translateY(-1px); }
 .go:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 #8E0E12; }
 .go:disabled { filter: saturate(.35) brightness(.85); cursor: default; }
-.go:focus-visible, .mute:focus-visible, summary:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.go:focus-visible, .mute:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 
-details.sounds { font-size: 13px; color: var(--navy-deep); max-width: 34rem; text-align: center; }
-details.sounds summary { cursor: pointer; font-weight: 800; color: var(--navy); }
-.sound-panel {
-  margin-top: 8px; text-align: left; padding: 12px 14px;
-  background: rgba(255, 255, 255, .92); border-radius: 12px; border: 2px solid var(--navy);
-  display: grid; gap: 10px; line-height: 1.45;
+.clips-btn {
+  font: 800 13px var(--body); color: var(--navy); background: none; border: 0;
+  padding: 4px 12px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+  background: rgba(255, 255, 255, .8); border-radius: 999px;
 }
+.clips-btn:focus-visible, .sound-panel button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+/* The clip picker is a modal: it covers nothing until opened and closes with Done, Esc or a tap outside. */
+dialog.sounds {
+  width: min(30rem, calc(100vw - 32px)); box-sizing: border-box;
+  padding: 0; border: 3px solid var(--navy); border-radius: 14px;
+  background: var(--white); color: var(--navy-deep);
+  box-shadow: 0 6px 0 var(--navy-deep), 0 18px 40px rgba(6, 18, 58, .5);
+}
+dialog.sounds::backdrop { background: rgba(6, 18, 58, .6); }
+.sound-panel { padding: 16px 18px; display: grid; gap: 12px; font-size: 14px; line-height: 1.45; }
+.sound-panel h2 { margin: 0; font: 400 20px var(--display); color: var(--navy); }
 .sound-panel label { display: grid; gap: 4px; font-weight: 800; }
 .sound-panel input { font: inherit; font-weight: 600; max-width: 100%; }
 .sound-panel p { margin: 0; font-weight: 600; }
 .sound-status { font-weight: 600; color: #0F5B21; min-height: 1em; }
 .sound-status.err { color: #A0141A; }
+.sound-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+.sound-actions button {
+  font: 800 14px var(--body); border-radius: 999px; padding: 8px 16px; cursor: pointer;
+  border: 2px solid var(--navy); background: var(--white); color: var(--navy);
+}
+.sound-actions button.primary { background: var(--navy); color: var(--white); }
 
 /* ---------- Reveal ---------- */
 .reveal {
@@ -320,21 +335,27 @@ details.sounds summary { cursor: pointer; font-weight: 800; color: var(--navy); 
 
   <div class="controls">
     <button class="go" id="go" type="button">Make a Character</button>
-    <details class="sounds">
-      <summary>Use your own sound clips</summary>
-      <div class="sound-panel">
-        <p>The built-in jingle and ring chime are original chiptune sounds made in your browser. If you have your own clips, pick them here. They stay on this device and are forgotten when the page closes.</p>
-        <label for="jingleFile">Level-clear jingle
-          <input id="jingleFile" type="file" accept="audio/*">
-        </label>
-        <label for="ringFile">Ring sound
-          <input id="ringFile" type="file" accept="audio/*">
-        </label>
-        <div class="sound-status" id="soundStatus" role="status"></div>
-      </div>
-    </details>
+    <button class="clips-btn" id="clipsOpen" type="button" aria-haspopup="dialog">Use your own sound clips</button>
   </div>
 </div>
+
+<dialog class="sounds" id="clipsDialog" aria-labelledby="clipsTitle">
+  <form class="sound-panel" method="dialog">
+    <h2 id="clipsTitle">Your own sound clips</h2>
+    <p>The built-in jingle and ring chime are original chiptune sounds made in your browser. If you have your own clips, pick them here. They stay on this device and are forgotten when the page closes.</p>
+    <label for="jingleFile">Level-clear jingle
+      <input id="jingleFile" type="file" accept="audio/*">
+    </label>
+    <label for="ringFile">Ring sound
+      <input id="ringFile" type="file" accept="audio/*">
+    </label>
+    <div class="sound-status" id="soundStatus" role="status"></div>
+    <div class="sound-actions">
+      <button type="button" id="clipsReset">Use built-in sounds</button>
+      <button type="submit" class="primary" id="clipsDone">Done</button>
+    </div>
+  </form>
+</dialog>
 
 <div class="reveal" id="reveal" hidden>
   <div class="scrim"></div>
@@ -844,6 +865,7 @@ function frame(now) {
 }
 
 go.addEventListener("click", () => {
+  closeClips();
   if (phase === "spinning" || phase === "holding") return;
   spin();
 });
@@ -862,26 +884,51 @@ muteBtn.addEventListener("click", () => {
 });
 syncMute();
 
+const clipsDialog = document.getElementById("clipsDialog");
+const clipsBtn = document.getElementById("clipsOpen");
 const status = document.getElementById("soundStatus");
+const jingleInput = document.getElementById("jingleFile");
+const ringInput = document.getElementById("ringFile");
+const clipNotes = { Jingle: "", "Ring sound": "" };
+function showClipStatus(err) {
+  status.textContent = err || [clipNotes.Jingle, clipNotes["Ring sound"]].filter(Boolean).join(" ");
+  status.className = err ? "sound-status err" : "sound-status";
+  const n = (customJingle ? 1 : 0) + (customRing ? 1 : 0);
+  clipsBtn.textContent = n ? `Your sound clips (${n} in use)` : "Use your own sound clips";
+}
+function closeClips() { if (clipsDialog.open) clipsDialog.close(); }
+clipsBtn.addEventListener("click", () => {
+  if (typeof clipsDialog.showModal === "function") clipsDialog.showModal();
+  else clipsDialog.setAttribute("open", "");
+});
+// A tap on the dimmed backdrop lands on the <dialog> itself, outside the form.
+clipsDialog.addEventListener("click", (e) => { if (e.target === clipsDialog) closeClips(); });
+document.getElementById("clipsReset").addEventListener("click", () => {
+  customJingle = null; customRing = null;
+  jingleInput.value = ""; ringInput.value = "";
+  clipNotes.Jingle = ""; clipNotes["Ring sound"] = "";
+  showClipStatus();
+  status.textContent = "Back to the built-in jingle and ring chime.";
+});
 function loadClip(input, label, assign) {
   input.addEventListener("change", async () => {
     const f = input.files && input.files[0];
     if (!f) return;
     const a = audio();
-    if (!a) { status.textContent = "This browser has no Web Audio support, so custom clips can't play."; status.className = "sound-status err"; return; }
+    if (!a) { showClipStatus("This browser has no Web Audio support, so custom clips can't play."); return; }
     try {
       const buf = await a.decodeAudioData(await f.arrayBuffer());
       assign(buf);
-      status.textContent = `${label}: using "${f.name}" (${buf.duration.toFixed(1)} s).`;
-      status.className = "sound-status";
+      clipNotes[label] = `${label}: using "${f.name}" (${buf.duration.toFixed(1)} s).`;
+      showClipStatus();
     } catch (e) {
-      status.textContent = `${label}: "${f.name}" could not be decoded (${e && e.name ? e.name : "unknown error"}). Try an MP3, WAV or OGG file.`;
-      status.className = "sound-status err";
+      input.value = ""; // don't leave a file name showing that isn't in use
+      showClipStatus(`${label}: "${f.name}" could not be decoded (${e && e.name ? e.name : "unknown error"}). Try an MP3, WAV or OGG file.`);
     }
   });
 }
-loadClip(document.getElementById("jingleFile"), "Jingle", (b) => { customJingle = b; });
-loadClip(document.getElementById("ringFile"), "Ring sound", (b) => { customRing = b; });
+loadClip(jingleInput, "Jingle", (b) => { customJingle = b; });
+loadClip(ringInput, "Ring sound", (b) => { customRing = b; });
 
 /* ================= Boot ================= */
 reelName.setIdle(); reelAnimal.setIdle();
