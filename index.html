@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- ARTIFACT-BODY-START -->
+<title>Hedgehog OC Machine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Titan+One&family=Nunito:wght@600;800&family=Press+Start+2P&display=swap">
+<style>
+/* One deliberate look (16-bit zone at noon), so no light/dark split:
+   every colour below is set explicitly and works on any host background. */
+:root {
+  color-scheme: light;
+  --sky-top: #1848C8;
+  --sky-mid: #4F9BFF;
+  --sky-low: #BFE3FF;
+  --hill: #2E9E43;
+  --hill-dark: #1F7A33;
+  --dirt-a: #B8561E;
+  --dirt-b: #7A3410;
+  --grass: #45C04A;
+  --navy: #0B1E5B;
+  --navy-deep: #06123A;
+  --gold: #FFD21F;
+  --gold-dark: #C88A00;
+  --red: #E3262B;
+  --blue: #1F5FD6;
+  --white: #FFFFFF;
+  --ground-h: 56px;
+  --rowH: clamp(40px, 7vh, 58px);
+  --vis: 5;
+  --display: "Titan One", "Arial Black", "Helvetica Neue", Impact, sans-serif;
+  --body: "Nunito", "Segoe UI", system-ui, sans-serif;
+  --hud: "Press Start 2P", "Courier New", monospace;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  overflow: hidden;
+  color: var(--white);
+  font-family: var(--body);
+  background:
+    radial-gradient(ellipse 40% 18% at 12% 100%, var(--hill) 60%, transparent 61%) 0 calc(100% - var(--ground-h) + 30px) / 100% 100% no-repeat,
+    radial-gradient(ellipse 34% 22% at 58% 100%, var(--hill-dark) 60%, transparent 61%) 0 calc(100% - var(--ground-h) + 30px) / 100% 100% no-repeat,
+    radial-gradient(ellipse 30% 14% at 92% 100%, var(--hill) 60%, transparent 61%) 0 calc(100% - var(--ground-h) + 30px) / 100% 100% no-repeat,
+    linear-gradient(var(--sky-top) 0%, var(--sky-mid) 50%, var(--sky-low) 78%);
+}
+.ground {
+  position: fixed; left: 0; right: 0; bottom: 0; height: var(--ground-h);
+  background:
+    linear-gradient(var(--grass) 0 10px, #2E8F33 10px 14px, transparent 14px),
+    repeating-conic-gradient(var(--dirt-a) 0 25%, var(--dirt-b) 0 50%) 0 14px / 28px 28px;
+  z-index: 0;
+}
+.app {
+  position: relative;
+  height: 100%; box-sizing: border-box;
+  display: flex; flex-direction: column;
+  padding-inline: 16px;
+  padding-block: 12px calc(var(--ground-h) + 10px);
+  max-width: 1100px; margin: 0 auto;
+}
+
+/* ---------- HUD ---------- */
+.hud {
+  position: relative; z-index: 30;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  font-family: var(--hud); font-size: 11px; line-height: 1.9;
+  text-shadow: 2px 2px 0 var(--navy-deep);
+}
+.hud dl { margin: 0; display: grid; grid-template-columns: auto auto; column-gap: 14px; }
+.hud dt { color: var(--gold); }
+.hud dd { margin: 0; color: var(--white); font-variant-numeric: tabular-nums; }
+.mute {
+  font: inherit; font-size: 9px; color: var(--white);
+  background: var(--navy); border: 2px solid var(--gold); border-radius: 6px;
+  padding: 8px 10px; cursor: pointer; text-shadow: none;
+}
+.mute[aria-pressed="true"] { color: var(--gold); }
+
+/* ---------- Machine ---------- */
+.stage { flex: 1; min-height: 0; display: grid; place-items: center; }
+.machine {
+  position: relative; width: 100%;
+  display: flex; align-items: center; gap: 14px;
+  box-sizing: border-box;
+  padding: 26px 30px;
+  background: linear-gradient(var(--navy), var(--navy-deep));
+  border: 4px solid var(--gold);
+  border-radius: 20px;
+  box-shadow: 0 6px 0 var(--gold-dark), 0 14px 30px rgba(6, 18, 58, .45);
+}
+.bulbs { position: absolute; left: 18px; right: 18px; display: flex; justify-content: space-between; pointer-events: none; }
+.bulbs.top { top: 8px; } .bulbs.bot { bottom: 8px; }
+.bulbs i { width: 8px; height: 8px; border-radius: 50%; background: #6b5a1a; }
+.machine.live .bulbs i { animation: chase .24s steps(1) infinite; }
+.machine.live .bulbs i:nth-child(odd) { animation-delay: .12s; }
+.machine.won .bulbs i { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+@keyframes chase { 0% { background: var(--gold); box-shadow: 0 0 8px var(--gold); } 50% { background: #6b5a1a; box-shadow: none; } }
+
+.reel-wrap { position: relative; flex: 1; min-width: 0; }
+.reel-label {
+  font-family: var(--hud); font-size: 9px; color: var(--gold);
+  letter-spacing: .08em; margin-bottom: 8px; text-align: center;
+}
+.reel {
+  position: relative; height: calc(var(--rowH) * var(--vis));
+  overflow: hidden; border-radius: 12px;
+  background: var(--navy-deep);
+  perspective: 700px;
+  border: 3px solid #000A2A;
+}
+.row {
+  position: absolute; left: 0; right: 0; top: 50%;
+  height: var(--rowH); margin-top: calc(var(--rowH) / -2);
+  display: flex; align-items: center; justify-content: center;
+  box-sizing: border-box; padding-inline: 10px;
+  border-block: 2px solid rgba(0, 0, 0, .28);
+  backface-visibility: hidden; will-change: transform;
+  font-family: var(--display); color: var(--white);
+  white-space: nowrap; letter-spacing: .01em;
+  -webkit-text-stroke: 1.5px var(--navy-deep); paint-order: stroke fill;
+  text-shadow: 2px 2px 0 var(--navy-deep);
+}
+.row.c0 { background: linear-gradient(#F0474B, var(--red)); }
+.row.c1 { background: linear-gradient(#3C7CF0, var(--blue)); }
+.row.c2 { background: linear-gradient(#FFE15A, #F2B705); }
+.reel::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  background: linear-gradient(rgba(6,18,58,.85), rgba(6,18,58,0) 38%, rgba(6,18,58,0) 62%, rgba(6,18,58,.85));
+}
+.window {
+  position: absolute; left: -3px; right: -3px; top: 50%; z-index: 3;
+  height: var(--rowH); margin-top: calc(var(--rowH) / -2);
+  border: 3px solid var(--gold); border-radius: 6px; box-sizing: border-box;
+  box-shadow: 0 0 0 2px var(--navy-deep), 0 0 18px rgba(255, 210, 31, .55);
+  pointer-events: none;
+}
+.flipper {
+  position: absolute; right: -24px; top: 50%; z-index: 4;
+  width: 26px; height: 22px; margin-top: -11px;
+  transform-origin: 100% 50%;
+  pointer-events: none;
+}
+.flipper::before {
+  content: ""; position: absolute; inset: 0;
+  background: var(--gold);
+  clip-path: polygon(0 50%, 100% 0, 100% 100%);
+  filter: drop-shadow(0 0 0 var(--navy-deep));
+}
+.flipper::after {
+  content: ""; position: absolute; right: -4px; top: 50%; width: 10px; height: 10px; margin-top: -5px;
+  border-radius: 50%; background: var(--red); border: 2px solid var(--navy-deep);
+}
+.the {
+  font-family: var(--display); font-size: 30px; color: var(--gold);
+  transform: skewX(-8deg); padding-top: 18px;
+  -webkit-text-stroke: 2px var(--navy-deep); paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--navy-deep);
+}
+.reel-wrap.name .flipper { right: auto; left: -24px; transform-origin: 0 50%; }
+.reel-wrap.name .flipper::before { clip-path: polygon(100% 50%, 0 0, 0 100%); }
+.reel-wrap.name .flipper::after { right: auto; left: -4px; }
+
+/* ---------- Controls ---------- */
+.controls {
+  position: relative; z-index: 30;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding-top: 14px;
+}
+.go {
+  font-family: var(--display); font-size: 24px; letter-spacing: .02em;
+  color: var(--white); background: linear-gradient(#FF4A4F, var(--red));
+  border: 4px solid var(--navy-deep); border-radius: 999px;
+  padding: 12px 34px; cursor: pointer;
+  box-shadow: 0 6px 0 #8E0E12, 0 10px 18px rgba(6, 18, 58, .35);
+  -webkit-text-stroke: 1.5px var(--navy-deep); paint-order: stroke fill;
+  text-shadow: 2px 2px 0 var(--navy-deep);
+  transition: transform .08s, box-shadow .08s;
+}
+.go:hover:not(:disabled) { transform: translateY(-1px); }
+.go:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 #8E0E12; }
+.go:disabled { filter: saturate(.35) brightness(.85); cursor: default; }
+.go:focus-visible, .mute:focus-visible, summary:focus-visible, input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+
+details.sounds { font-size: 13px; color: var(--navy-deep); max-width: 34rem; text-align: center; }
+details.sounds summary { cursor: pointer; font-weight: 800; color: var(--navy); }
+.sound-panel {
+  margin-top: 8px; text-align: left; padding: 12px 14px;
+  background: rgba(255, 255, 255, .92); border-radius: 12px; border: 2px solid var(--navy);
+  display: grid; gap: 10px; line-height: 1.45;
+}
+.sound-panel label { display: grid; gap: 4px; font-weight: 800; }
+.sound-panel input { font: inherit; font-weight: 600; max-width: 100%; }
+.sound-panel p { margin: 0; font-weight: 600; }
+.sound-status { font-weight: 600; color: #0F5B21; min-height: 1em; }
+.sound-status.err { color: #A0141A; }
+
+/* ---------- Reveal ---------- */
+.reveal {
+  position: fixed; inset: 0; z-index: 20;
+  display: grid; place-items: center;
+  pointer-events: none;
+  padding-inline: 16px;
+}
+.scrim {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 45%, rgba(6, 18, 58, .55), rgba(6, 18, 58, .82));
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  animation: fadein .35s ease-out both;
+}
+.rays {
+  position: absolute; left: 50%; top: 46%; width: 220vmax; height: 220vmax;
+  margin: -110vmax 0 0 -110vmax;
+  background: repeating-conic-gradient(rgba(255, 236, 140, .55) 0 7deg, rgba(255, 236, 140, 0) 7deg 18deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0, #000 12%, transparent 45%);
+          mask-image: radial-gradient(circle, #000 0, #000 12%, transparent 45%);
+  animation: spinrays 14s linear infinite, fadein .5s ease-out both;
+}
+.flash { position: absolute; inset: 0; background: #fff; animation: flash .5s ease-out both; }
+.card {
+  position: relative; text-align: center; max-width: 100%;
+  display: grid; justify-items: center; gap: 2px;
+  transform: translateY(-4vh);
+}
+.rv-line {
+  font-family: var(--display); line-height: 1.02; white-space: nowrap;
+  font-size: clamp(44px, 11vw, 128px);
+  color: var(--gold);
+  -webkit-text-stroke: 5px var(--navy-deep); paint-order: stroke fill;
+  text-shadow: 6px 6px 0 var(--navy-deep), 0 0 30px rgba(255, 255, 255, .6);
+}
+.rv-name { animation: slamL .55s cubic-bezier(.2, 1.4, .4, 1) both; }
+.rv-animal { animation: slamR .55s .18s cubic-bezier(.2, 1.4, .4, 1) both; color: #FFFFFF; }
+.rv-the {
+  font-family: var(--display); font-size: clamp(22px, 4vw, 40px); color: var(--white);
+  -webkit-text-stroke: 3px var(--navy-deep); paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--navy-deep);
+  animation: pop .4s .1s cubic-bezier(.2, 1.6, .4, 1) both;
+}
+.rv-tag {
+  margin-top: 14px; font-family: var(--hud); font-size: clamp(9px, 1.6vw, 12px); color: var(--gold);
+  background: var(--navy-deep); padding: 8px 12px; border-radius: 6px; letter-spacing: .06em;
+  animation: fadein .4s .9s both;
+}
+@keyframes slamL { from { transform: translateX(-120vw) skewX(-8deg); } to { transform: translateX(0) skewX(-8deg); } }
+@keyframes slamR { from { transform: translateX(120vw) skewX(-8deg); } to { transform: translateX(0) skewX(-8deg); } }
+@keyframes pop { from { transform: scale(0) rotate(-12deg); } to { transform: scale(1) rotate(0); } }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+@keyframes flash { from { opacity: .9; } to { opacity: 0; } }
+@keyframes spinrays { to { transform: rotate(360deg); } }
+
+#fx { position: fixed; inset: 0; z-index: 25; pointer-events: none; width: 100%; height: 100%; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (max-width: 680px), (max-height: 720px) {
+  :root { --vis: 3.4; --rowH: clamp(38px, 6.4vh, 50px); }
+}
+@media (max-width: 680px) {
+  .machine { flex-direction: column; gap: 4px; padding: 22px 34px; }
+  .reel-wrap { width: 100%; }
+  .the { padding-top: 0; font-size: 24px; }
+  .reel-label { margin-bottom: 4px; }
+  .go { font-size: 20px; padding: 10px 26px; }
+  .hud { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scrim {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 45%, rgba(6, 18, 58, .55), rgba(6, 18, 58, .82));
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  animation: fadein .35s ease-out both;
+}
+.rays { animation: fadein .3s both; }
+  .rv-name, .rv-animal { animation: fadein .3s both; transform: skewX(-8deg); }
+  .machine.live .bulbs i { animation: none; background: var(--gold); }
+}
+</style>
+
+<div class="ground" aria-hidden="true"></div>
+<div class="app">
+  <header class="hud">
+    <dl>
+      <dt>SCORE</dt><dd id="hudScore">0</dd>
+      <dt>TIME</dt><dd id="hudTime">0:00</dd>
+      <dt>RINGS</dt><dd id="hudRings">0</dd>
+    </dl>
+    <button class="mute" id="mute" type="button" aria-pressed="false">SOUND ON</button>
+  </header>
+
+  <main class="stage">
+    <div class="machine" id="machine">
+      <div class="bulbs top" aria-hidden="true"></div>
+      <div class="bulbs bot" aria-hidden="true"></div>
+      <div class="reel-wrap name">
+        <div class="reel-label" aria-hidden="true">NAME</div>
+        <div class="reel" id="reelName" aria-hidden="true"><div class="window"></div></div>
+        <div class="flipper" id="flipName" aria-hidden="true"></div>
+      </div>
+      <div class="the" aria-hidden="true">the</div>
+      <div class="reel-wrap animal">
+        <div class="reel-label" aria-hidden="true">SPECIES</div>
+        <div class="reel" id="reelAnimal" aria-hidden="true"><div class="window"></div></div>
+        <div class="flipper" id="flipAnimal" aria-hidden="true"></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="controls">
+    <button class="go" id="go" type="button">Make a Character</button>
+    <details class="sounds">
+      <summary>Use your own sound clips</summary>
+      <div class="sound-panel">
+        <p>The built-in jingle and ring chime are original chiptune sounds made in your browser. If you have your own clips, pick them here. They stay on this device and are forgotten when the page closes.</p>
+        <label for="jingleFile">Level-clear jingle
+          <input id="jingleFile" type="file" accept="audio/*">
+        </label>
+        <label for="ringFile">Ring sound
+          <input id="ringFile" type="file" accept="audio/*">
+        </label>
+        <div class="sound-status" id="soundStatus" role="status"></div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div class="reveal" id="reveal" hidden>
+  <div class="scrim"></div>
+  <div class="rays"></div>
+  <div class="flash"></div>
+  <div class="card">
+    <div class="rv-line rv-name" id="rvName"></div>
+    <div class="rv-the">the</div>
+    <div class="rv-line rv-animal" id="rvAnimal"></div>
+    <div class="rv-tag">ORIGINAL CHARACTER · DO NOT STEAL</div>
+  </div>
+</div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<p class="sr" id="announce" aria-live="polite"></p>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="blurName"><feGaussianBlur id="blurNameDev" stdDeviation="0 0"/></filter>
+  <filter id="blurAnimal"><feGaussianBlur id="blurAnimalDev" stdDeviation="0 0"/></filter>
+</svg>
+
+<script>
+(() => {
+"use strict";
+
+/* ================= Word pools ================= */
+// Three name pools, drawn with equal odds so the dad names are not swamped.
+const NAMES_PLAIN = ["Todd","Kate","Gary","Brenda","Doug","Linda","Kevin","Karen","Steve","Janet","Greg","Barb","Dave","Carol","Phil","Deb","Ron","Sharon","Randy","Tammy","Dennis","Pam","Gene","Marge","Bob","Sue","Terry","Denise","Chad","Stacy","Brad","Wendy","Larry","Donna","Rick","Cheryl","Keith","Diane","Norm","Judy","Gordon","Rhonda","Walt","Nancy","Frank","Lori","Neil","Beth","Craig","Joyce","Kyle","Heather","Dale","Glenda","Stan","Peggy","Carl","Trish","Mike","Jen"];
+const NAMES_MODERN = ["Aiden","Jaxon","Brayden","Kayden","Nevaeh","Paisley","Maverick","Oakley","Everly","Kinsley","Ryker","Bentley","Brantley","Jayceon","Zayden","Rylee","Braxton","Kaison","Ezra","Harper","Legend","Knox","Remington","Hudson","Sutton","Nova","Beckham","Kashton","Maddox","Jaxtyn","Brynlee","Khaleesi","Zaylee","Crew","Kylo","Bodhi","Journee","Ryleigh","Axton","Kyrie","Ledger","Oaklynn","Tatum","Blakely","Kaiden","Colter","Zion","Emberly","Denver","Truett"];
+// Sega-style one-word names. Canon names (Sonic, Tails, Shadow, Blaze, Silver,
+// Rouge, Espio, Vector, Jet, Wave, Storm, Surge, Tangle, Whisper, Mighty, Ray,
+// Bean, Bark, Fang, Nack, Honey, Cream, Cosmo, Marine, Sticks, Clutch, Kit...)
+// are deliberately left out so every result reads as a new character.
+const NAMES_SEGA = ["Zoom","Dash","Bolt","Skid","Blitz","Rumble","Clank","Grind","Drift","Flicker","Rivet","Torque","Scuttle","Nimbus","Quill","Jolt","Swoop","Glide","Crag","Flint","Ember","Vortex","Static","Ricochet","Nitro","Turbo","Ripple","Tumble","Spindle","Cinder","Gale","Dynamo","Twister","Piston","Rattle","Sprocket","Zephyr","Ozone","Riff","Slate","Grit","Hex","Tempo","Flux","Fizz","Pogo","Sonar","Pulse","Skate","Torrent","Axle","Brisk","Scorch","Quasar","Rebel","Crank","Zipline","Volt","Mach","Burst"];
+const NAME_POOLS = [NAMES_PLAIN, NAMES_MODERN, NAMES_SEGA];
+
+// Mostly odd creatures; pets and farm animals get a small share on purpose.
+// Hedgehog, fox and echidna are out: those three are already taken.
+const ANIMALS_ODD = ["Aye-aye","Axolotl","Pangolin","Okapi","Tapir","Quokka","Numbat","Quoll","Tarsier","Binturong","Fossa","Saiga","Gerenuk","Dik-dik","Kinkajou","Coati","Tenrec","Solenodon","Hyrax","Aardwolf","Aardvark","Capybara","Cassowary","Shoebill","Hoatzin","Kakapo","Kea","Takahe","Tuatara","Blobfish","Narwhal","Dugong","Manatee","Olm","Hellbender","Mudskipper","Sunfish","Oarfish","Anglerfish","Frilled Shark","Goblin Shark","Wobbegong","Nudibranch","Mantis Shrimp","Coconut Crab","Horseshoe Crab","Pistol Shrimp","Sea Pig","Giant Isopod","Tardigrade","Pika","Jerboa","Springhare","Markhor","Takin","Babirusa","Warthog","Peccary","Maned Wolf","Dhole","Bush Dog","Raccoon Dog","Civet","Genet","Linsang","Mongoose","Meerkat","Honey Badger","Wolverine","Fisher","Marten","Tayra","Zorilla","Olingo","Ringtail","Red Panda","Slow Loris","Bushbaby","Potto","Colugo","Sugar Glider","Bilby","Bandicoot","Wombat","Cuscus","Tree Kangaroo","Platypus","Thylacine","Dodo","Pademelon","Potoroo","Bettong","Gharial","Caiman","Gila Monster","Thorny Devil","Frilled Lizard","Basilisk","Chuckwalla","Komodo Dragon","Skink","Caecilian","Glass Frog","Purple Frog","Mata Mata","Snapping Turtle","Secretary Bird","Frogmouth","Potoo","Oilbird","Hornbill","Toucan","Puffin","Blue-footed Booby","Frigatebird","Lyrebird","Bowerbird","Hoopoe","Roadrunner","Kiwi","Quetzal","Ibis","Marabou Stork","Condor","Harpy Eagle","Albatross","Cuttlefish","Nautilus","Vampire Squid","Dumbo Octopus","Leafy Seadragon","Seahorse","Lamprey","Hagfish","Coelacanth","Arapaima","Sawfish","Manta Ray","Beluga","Vaquita","Walrus","Elephant Seal","Sea Otter","Muskox","Ibex","Pronghorn","Addax","Kudu","Klipspringer","Chevrotain","Muntjac","Moose","Mandrill","Proboscis Monkey","Gelada","Uakari","Tamarin","Howler Monkey","Siamang","Anteater","Armadillo","Sloth","Naked Mole-rat","Star-nosed Mole","Desman","Shrew","Viscacha","Mara","Agouti","Porcupine","Marmot","Dormouse","Lemming","Sea Urchin","Sea Cucumber","Firefly","Stag Beetle","Dung Beetle","Mantis","Stick Insect","Cicada","Luna Moth","Dragonfly","Scorpion","Jumping Spider","Velvet Worm","Leech","Pufferfish","Honey Possum"];
+const ANIMALS_COMMON = ["Cat","Dog","Goat","Hamster","Goldfish","Llama","Chicken","Duck","Cow","Donkey","Parakeet","Sheep","Rabbit","Horse","Guinea Pig","Turkey"];
+const COMMON_SHARE = 0.1;
+
+const rand = (n) => Math.floor(Math.random() * n);
+const pickFrom = (a) => a[rand(a.length)];
+const randomName = () => pickFrom(NAME_POOLS[rand(NAME_POOLS.length)]);
+const randomAnimal = () => pickFrom(Math.random() < COMMON_SHARE ? ANIMALS_COMMON : ANIMALS_ODD);
+
+/* ================= Timing (ms) ================= */
+const NAME_SPIN_MS = 4300;   // name reel stops first
+const ANIMAL_SPIN_MS = 5000; // the whole spin is ~5 s
+const NAME_ITEMS = 52;       // how many entries blip past
+const ANIMAL_ITEMS = 64;
+const HOLD_MS = 1500;        // both reels stationary before the reveal
+
+/* ================= Audio ================= */
+let ac = null, master = null, noiseBuf = null;
+let muted = false;
+let customJingle = null, customRing = null;
+try { muted = localStorage.getItem("ocgen-muted") === "1"; } catch (e) {}
+
+function audio() {
+  if (!ac) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    ac = new AC();
+    master = ac.createGain();
+    master.gain.value = muted ? 0 : 0.9;
+    master.connect(ac.destination);
+    noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  if (ac.state === "suspended") ac.resume();
+  return ac;
+}
+const hz = (n) => {
+  const m = /^([A-G])(#?)(\d)$/.exec(n);
+  const idx = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] ? 1 : 0);
+  return 440 * Math.pow(2, (idx + (Number(m[3]) + 1) * 12 - 69) / 12);
+};
+function panner(p) {
+  if (ac.createStereoPanner) { const s = ac.createStereoPanner(); s.pan.value = p; return s; }
+  return ac.createGain();
+}
+
+// Wheel clicker: a short band-passed noise clack.
+let lastTickAt = 0;
+function tick(pan) {
+  if (!ac || muted) return;
+  const now = ac.currentTime;
+  if (now - lastTickAt < 0.028) return;
+  lastTickAt = now;
+  const src = ac.createBufferSource(); src.buffer = noiseBuf;
+  const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2600; bp.Q.value = 3;
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.35, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+  const p = panner(pan);
+  src.connect(bp).connect(g).connect(p).connect(master);
+  src.start(now, Math.random() * 0.4, 0.04);
+}
+
+function playBuffer(buf, when, pan, vol) {
+  const s = ac.createBufferSource(); s.buffer = buf;
+  const g = ac.createGain(); g.gain.value = vol;
+  s.connect(g).connect(panner(pan)).connect(master);
+  s.start(when);
+}
+
+// Ring pickup: two quick bright square-wave notes, alternating left and right.
+function ring(when, pan) {
+  if (customRing) return playBuffer(customRing, when, pan, 0.8);
+  [["E6", 0, 0.07], ["B6", 0.065, 0.32]].forEach(([n, off, len]) => {
+    const t = when + off;
+    const o = ac.createOscillator(); o.type = "square"; o.frequency.value = hz(n);
+    const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 5200;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.07, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + len);
+    o.connect(lp).connect(g).connect(panner(pan)).connect(master);
+    o.start(t); o.stop(t + len + 0.02);
+  });
+}
+
+// An original 16-bit-style "act clear" fanfare (about 3.5 s). Not a Sega melody.
+const LEAD = [["G4",1],["C5",1],["E5",1],["G5",2],["E5",1],["G5",1],["C6",3],["A5",1],["B5",1],["C6",1],["D6",1],["B5",1],["G5",1],["C6",6]];
+const BASS = [["C3",2],["G2",2],["C3",2],["G2",2],["F2",2],["F2",2],["G2",2],["G2",2],["C3",6]];
+const STEP = 0.155;
+function voice(notes, type, vol, t0, vibratoLast) {
+  let t = t0;
+  notes.forEach(([n, len], i) => {
+    const dur = len * STEP;
+    const o = ac.createOscillator(); o.type = type; o.frequency.value = hz(n);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.008);
+    g.gain.setValueAtTime(vol * 0.8, t + Math.max(0.01, dur - 0.05));
+    g.gain.exponentialRampToValueAtTime(0.0005, t + dur + (i === notes.length - 1 ? 0.35 : 0.01));
+    if (vibratoLast && i === notes.length - 1) {
+      const lfo = ac.createOscillator(); lfo.frequency.value = 6;
+      const lg = ac.createGain(); lg.gain.value = hz(n) * 0.012;
+      lfo.connect(lg).connect(o.frequency); lfo.start(t + 0.15); lfo.stop(t + dur + 0.4);
+    }
+    const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 4200;
+    o.connect(lp).connect(g).connect(master);
+    o.start(t); o.stop(t + dur + 0.4);
+    t += dur;
+  });
+}
+function drum(t, kind) {
+  const src = ac.createBufferSource(); src.buffer = noiseBuf;
+  const f = ac.createBiquadFilter();
+  const g = ac.createGain();
+  if (kind === "k") { f.type = "lowpass"; f.frequency.value = 180; g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.12); }
+  else if (kind === "s") { f.type = "bandpass"; f.frequency.value = 1800; g.gain.setValueAtTime(0.35, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.1); }
+  else { f.type = "highpass"; f.frequency.value = 5000; g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.9); }
+  src.connect(f).connect(g).connect(master);
+  src.start(t, 0, kind === "c" ? 0.95 : 0.15);
+}
+function jingle(t0) {
+  if (customJingle) return playBuffer(customJingle, t0, 0, 0.9);
+  voice(LEAD, "square", 0.075, t0, true);
+  voice(BASS, "triangle", 0.22, t0, false);
+  for (let i = 0; i < 16; i += 2) { drum(t0 + i * STEP, "k"); drum(t0 + (i + 1) * STEP, "s"); }
+  drum(t0 + 14.5 * STEP, "s");
+  drum(t0 + 16 * STEP, "k"); drum(t0 + 16 * STEP, "c");
+}
+
+/* ================= Reels ================= */
+const SLOT_DEG = 22, SLOT_RAD = SLOT_DEG * Math.PI / 180;
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function makeReel(el, flipEl, blurDev, blurId, source, pan) {
+  const rows = [];
+  for (let j = 0; j < 9; j++) {
+    const r = document.createElement("div");
+    r.className = "row";
+    r.appendChild(document.createElement("span"));
+    el.insertBefore(r, el.firstChild);
+    rows.push({ el: r, idx: null });
+  }
+  const reel = {
+    seq: [], offset: 0, anim: null, lastK: 0, flip: 0, prevOff: 0, rowH: 50,
+    setIdle() {
+      rows.forEach((r) => { r.idx = null; });
+      reel.seq = Array.from({ length: 12 }, source);
+      reel.offset = 6; reel.lastK = 6; reel.render(0);
+    },
+    current() { return reel.seq[mod(Math.round(reel.offset), reel.seq.length)]; },
+    start(target, items, dur, t0) {
+      const cur = reel.current();
+      const pad = () => Array.from({ length: 4 }, source);
+      const middle = Array.from({ length: items - 1 }, source);
+      reel.seq = [...pad(), cur, ...middle, target, ...pad()];
+      rows.forEach((r) => { r.idx = null; });
+      reel.offset = 4; reel.lastK = 4; reel.prevK = 4; reel.prevOff = 4;
+      reel.anim = { from: 4, dist: items, t0, dur };
+    },
+    // Fast start, long slow-down, a hair past the target, then settle back.
+    update(now, dt) {
+      if (!reel.anim) { reel.decayFlip(dt); return true; }
+      const a = reel.anim;
+      const t = Math.min(1, (now - a.t0) / a.dur);
+      const OVER = 0.3, SPLIT = 0.88;
+      if (t < SPLIT) {
+        const p = 1 - Math.pow(1 - t / SPLIT, 4);
+        reel.offset = a.from + (a.dist + OVER) * p;
+      } else {
+        const q = (t - SPLIT) / (1 - SPLIT), s = q * q * (3 - 2 * q);
+        reel.offset = a.from + a.dist + OVER * (1 - s);
+      }
+      const k = Math.round(reel.offset);
+      if (k !== reel.lastK) { reel.lastK = k; reel.flip = k > reel.prevK ? 26 : -18; tick(pan); }
+      reel.prevK = k;
+      const speed = dt > 0 ? Math.abs(reel.offset - reel.prevOff) / dt : 0; // items per second
+      reel.prevOff = reel.offset;
+      reel.render(speed);
+      reel.decayFlip(dt);
+      if (t >= 1) { reel.offset = a.from + a.dist; reel.anim = null; reel.render(0); return true; }
+      return false;
+    },
+    decayFlip(dt) {
+      reel.flip *= Math.exp(-dt * 16);
+      const side = el.parentElement.classList.contains("name") ? -1 : 1;
+      flipEl.style.transform = `rotate(${(side * reel.flip).toFixed(2)}deg)`;
+    },
+    render(speed) {
+      reel.rowH = el.querySelector(".window").offsetHeight || 50;
+      const R = reel.rowH / SLOT_RAD;
+      const base = Math.floor(reel.offset), frac = reel.offset - base;
+      for (let j = 0; j < rows.length; j++) {
+        const k = j - 4;
+        const idx = base + k;
+        const row = rows[j];
+        const ang = (k - frac) * SLOT_RAD;
+        if (Math.abs(ang) > Math.PI / 2 - 0.05) { row.el.style.visibility = "hidden"; continue; }
+        row.el.style.visibility = "";
+        if (row.idx !== idx) {
+          row.idx = idx;
+          const text = reel.seq[mod(idx, reel.seq.length)];
+          row.el.firstChild.textContent = text;
+          row.el.className = "row c" + mod(idx, 3);
+          const w = el.clientWidth - 24;
+          const base = Math.min(reel.rowH * 0.56, 30);
+          row.el.style.fontSize = Math.min(base, (w / Math.max(4, text.length)) * 1.7) + "px";
+        }
+        const y = reduceMotion ? (k - frac) * reel.rowH : R * Math.sin(ang);
+        const rx = reduceMotion ? 0 : -(ang * 180 / Math.PI);
+        row.el.style.transform = `translateY(${y.toFixed(2)}px) rotateX(${rx.toFixed(2)}deg)`;
+      }
+      const b = reduceMotion ? 0 : Math.min(6, speed / 9);
+      blurDev.setAttribute("stdDeviation", "0 " + b.toFixed(2));
+      el.style.filter = b > 0.15 ? `url(#${blurId})` : "";
+    },
+  };
+  return reel;
+}
+const mod = (n, m) => ((n % m) + m) % m;
+
+const reelName = makeReel(document.getElementById("reelName"), document.getElementById("flipName"),
+  document.getElementById("blurNameDev"), "blurName", randomName, -0.4);
+const reelAnimal = makeReel(document.getElementById("reelAnimal"), document.getElementById("flipAnimal"),
+  document.getElementById("blurAnimalDev"), "blurAnimal", randomAnimal, 0.4);
+
+/* ================= Bulbs ================= */
+document.querySelectorAll(".bulbs").forEach((b) => {
+  const n = Math.max(8, Math.round(b.clientWidth / 26));
+  for (let i = 0; i < n; i++) b.appendChild(document.createElement("i"));
+});
+
+/* ================= FX canvas: rings + animals ================= */
+const fx = document.getElementById("fx");
+const ctx = fx.getContext("2d");
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = window.innerWidth; H = window.innerHeight;
+  fx.width = Math.round(W * DPR); fx.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  reelName.render(0); reelAnimal.render(0);
+}
+const groundY = () => H - 56 + 8;
+
+let rings = [];
+function spawnRings(cx, cy) {
+  const n = reduceMotion ? 18 : 44;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + Math.random() * 0.2;
+    const sp = 260 + Math.random() * 420;
+    rings.push({
+      x: cx, y: cy,
+      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 260,
+      phase: Math.random() * Math.PI * 2, spin: 9 + Math.random() * 6,
+      r: 11 + Math.random() * 4, age: 0, life: 4 + Math.random() * 1.5,
+    });
+  }
+  return n;
+}
+function drawRing(g) {
+  const w = Math.abs(Math.cos(g.phase));
+  if (g.age > g.life - 1.2 && Math.floor(g.age * 14) % 2) return; // blink before vanishing
+  ctx.save();
+  ctx.translate(g.x, g.y);
+  ctx.scale(Math.max(0.12, w), 1);
+  ctx.lineWidth = g.r * 0.42;
+  ctx.strokeStyle = "#8A5A00"; ctx.beginPath(); ctx.arc(0, 0, g.r, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = g.r * 0.28;
+  ctx.strokeStyle = "#FFD21F"; ctx.beginPath(); ctx.arc(0, 0, g.r, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = g.r * 0.1;
+  ctx.strokeStyle = "#FFF6B0"; ctx.beginPath(); ctx.arc(0, 0, g.r * 0.95, Math.PI * 1.05, Math.PI * 1.55); ctx.stroke();
+  ctx.restore();
+}
+function stepRings(dt) {
+  const gy = groundY();
+  for (const g of rings) {
+    g.age += dt; g.phase += g.spin * dt;
+    g.vy += 900 * dt; g.x += g.vx * dt; g.y += g.vy * dt;
+    if (g.y > gy - g.r) { g.y = gy - g.r; g.vy *= -0.62; g.vx *= 0.85; }
+    if (g.x < g.r || g.x > W - g.r) { g.vx *= -0.8; g.x = Math.max(g.r, Math.min(W - g.r, g.x)); }
+  }
+  rings = rings.filter((g) => g.age < g.life);
+}
+
+// Tiny original pixel critters. '.' is transparent.
+const PAL = { W: "#FFFFFF", P: "#FF9FB5", K: "#141414", B: "#2F7BFF", O: "#FF9A1A", T: "#7A3F16", N: "#C77A36", Y: "#FFD73A", G: "#9AA3B5", C: "#E8EDF5" };
+const SPRITES = [
+  [".W..W...", ".WP.WP..", ".WW.WW..", ".WWWWW..", "WWKWWWW.", "WWWWWWPW", ".WWWWWW.", "..W..W.."], // bunny
+  ["...BB...", "..BBBB..", ".BBBKBO.", ".BBBBBOO", "BBWWBB..", "BBWWWB..", ".BBBB...", "..O.O..."],  // bird
+  ["TT......", "TTT..NN.", "TTT.NNKN", ".TTNNNNN", "..TNNN..", "..NNNNN.", "..NNNN..", "..N..N.."],  // squirrel
+  ["...YY...", "..YYYY..", "..YYKYO.", "..YYYYOO", ".YYYYYY.", "YYYYYYY.", ".YYYYY..", "..O..O.."],  // chick
+  ["..GGG...", ".GGGGG..", ".GCKGCK.", ".GGGGGG.", "GGCCCCG.", "GGCCCCG.", ".GGGGG..", ".O...O.."],  // penguin-ish
+];
+const spriteCanvases = SPRITES.map((rows) => {
+  const S = 10, c = document.createElement("canvas"); c.width = S; c.height = S;
+  const g = c.getContext("2d");
+  const at = (x, y) => (rows[y] && rows[y][x] && rows[y][x] !== ".");
+  for (let y = -1; y <= 8; y++) for (let x = -1; x <= 8; x++) {
+    if (at(x, y)) { g.fillStyle = PAL[rows[y][x]]; g.fillRect(x + 1, y + 1, 1, 1); }
+    else if (at(x - 1, y) || at(x + 1, y) || at(x, y - 1) || at(x, y + 1)) { g.fillStyle = "#06123A"; g.fillRect(x + 1, y + 1, 1, 1); }
+  }
+  return c;
+});
+
+let critters = [];
+function spawnCritters() {
+  const n = reduceMotion ? 6 : 14;
+  const scale = W < 500 ? 3 : 4;
+  for (let i = 0; i < n; i++) {
+    const kind = i % SPRITES.length;
+    critters.push({
+      kind, scale,
+      x: W / 2 + (Math.random() - 0.5) * 60, y: groundY() - 10 * scale,
+      vx: (Math.random() < 0.5 ? -1 : 1) * (60 + Math.random() * 140),
+      vy: -(380 + Math.random() * 380),
+      wait: 0, bird: kind === 1,
+    });
+  }
+}
+function stepCritters(dt) {
+  const gy = groundY();
+  for (const c of critters) {
+    const size = 10 * c.scale;
+    c.vy += (c.bird && c.vy > 0 ? 500 : 1300) * dt;
+    c.x += c.vx * dt; c.y += c.vy * dt;
+    if (c.x < 0) { c.x = 0; c.vx = Math.abs(c.vx); }
+    if (c.x > W - size) { c.x = W - size; c.vx = -Math.abs(c.vx); }
+    if (c.y >= gy - size) {
+      c.y = gy - size; c.vy = 0;
+      if (c.wait <= 0) c.wait = 0.08 + Math.random() * 0.45;
+      c.wait -= dt;
+      if (c.wait <= 0) {
+        c.vy = -(c.bird ? 300 + Math.random() * 260 : 280 + Math.random() * 220);
+        if (Math.random() < 0.25) c.vx = -c.vx;
+      }
+    }
+  }
+}
+function drawCritters(now) {
+  for (const c of critters) {
+    const size = 10 * c.scale;
+    ctx.save();
+    const squash = c.vy === 0 ? 0.88 : 1;
+    ctx.translate(Math.round(c.x + size / 2), Math.round(c.y + size));
+    ctx.scale(c.vx < 0 ? -1 : 1, squash);
+    // Flap: birds bob their sprite while airborne.
+    const bob = c.bird && c.vy !== 0 ? Math.round(Math.sin(now / 50)) * c.scale : 0;
+    ctx.drawImage(spriteCanvases[c.kind], -size / 2, -size + bob, size, size);
+    ctx.restore();
+  }
+}
+
+/* ================= State machine ================= */
+const go = document.getElementById("go");
+const machine = document.getElementById("machine");
+const reveal = document.getElementById("reveal");
+const rvName = document.getElementById("rvName");
+const rvAnimal = document.getElementById("rvAnimal");
+const announce = document.getElementById("announce");
+const hudScore = document.getElementById("hudScore");
+const hudTime = document.getElementById("hudTime");
+const hudRings = document.getElementById("hudRings");
+
+let phase = "idle"; // idle | spinning | holding | revealed
+let spinStart = 0, score = 0, ringTotal = 0;
+let result = null;
+
+function pickDifferent(fn, avoid) {
+  let v = fn();
+  for (let i = 0; i < 8 && v === avoid; i++) v = fn();
+  return v;
+}
+
+function spin() {
+  audio();
+  clearReveal();
+  const now = performance.now();
+  result = { name: pickDifferent(randomName, reelName.current()), animal: pickDifferent(randomAnimal, reelAnimal.current()) };
+  reelName.start(result.name, NAME_ITEMS, NAME_SPIN_MS, now);
+  reelAnimal.start(result.animal, ANIMAL_ITEMS, ANIMAL_SPIN_MS, now);
+  spinStart = now;
+  phase = "spinning";
+  go.disabled = true;
+  machine.classList.remove("won");
+  machine.classList.add("live");
+  announce.textContent = "Spinning";
+  kick();
+}
+
+function clearReveal() {
+  reveal.hidden = true;
+  rings = []; critters = [];
+  ctx.clearRect(0, 0, W, H);
+}
+
+function fitLine(el) {
+  el.style.fontSize = "";
+  const max = Math.min(window.innerWidth - 32, 1100);
+  const w = el.scrollWidth;
+  if (w > max) {
+    const cur = parseFloat(getComputedStyle(el).fontSize);
+    el.style.fontSize = Math.floor(cur * max / w) + "px";
+  }
+}
+
+function showReveal() {
+  phase = "revealed";
+  machine.classList.remove("live");
+  machine.classList.add("won");
+  rvName.textContent = result.name;
+  rvAnimal.textContent = result.animal;
+  reveal.hidden = false;
+  // Restart the CSS entrance animations on every reveal.
+  reveal.querySelectorAll(".rv-line, .rv-the, .rv-tag, .scrim, .rays, .flash").forEach((n) => {
+    n.style.animation = "none"; void n.offsetWidth; n.style.animation = "";
+  });
+  fitLine(rvName); fitLine(rvAnimal);
+
+  const card = reveal.querySelector(".card").getBoundingClientRect();
+  const n = spawnRings(W / 2, card.top + card.height / 2);
+  spawnCritters();
+  ringTotal += n; score += 1000;
+  hudRings.textContent = ringTotal;
+  hudScore.textContent = score;
+
+  if (ac && !muted) {
+    const t = ac.currentTime + 0.03;
+    jingle(t + 0.12);
+    for (let i = 0; i < 7; i++) ring(t + i * 0.085, i % 2 ? 0.6 : -0.6);
+  }
+  announce.textContent = `${result.name} the ${result.animal}`;
+  go.textContent = "Create Another";
+  go.disabled = false;
+  go.focus({ preventScroll: true });
+  kick();
+}
+
+let running = false, lastFrame = 0;
+function kick() { if (!running) { running = true; lastFrame = performance.now(); requestAnimationFrame(frame); } }
+function frame(now) {
+  const dt = Math.min(0.05, (now - lastFrame) / 1000);
+  lastFrame = now;
+
+  if (phase === "spinning") {
+    const a = reelName.update(now, dt);
+    const b = reelAnimal.update(now, dt);
+    const secs = Math.floor((now - spinStart) / 1000);
+    hudTime.textContent = `0:${String(secs).padStart(2, "0")}`;
+    if (a && b) {
+      phase = "holding";
+      machine.classList.remove("live");
+      setTimeout(showReveal, HOLD_MS);
+    }
+  } else {
+    reelName.update(now, dt); reelAnimal.update(now, dt);
+  }
+
+  ctx.clearRect(0, 0, W, H);
+  if (rings.length || critters.length) {
+    stepRings(dt); stepCritters(dt);
+    rings.forEach(drawRing);
+    drawCritters(now);
+  }
+
+  // Keep animating while anything moves; the reveal keeps its critters until the next spin.
+  if (phase === "idle") { running = false; return; }
+  requestAnimationFrame(frame);
+}
+
+go.addEventListener("click", () => {
+  if (phase === "spinning" || phase === "holding") return;
+  spin();
+});
+
+/* ================= Sound controls ================= */
+const muteBtn = document.getElementById("mute");
+function syncMute() {
+  muteBtn.textContent = muted ? "SOUND OFF" : "SOUND ON";
+  muteBtn.setAttribute("aria-pressed", String(muted));
+  if (master) master.gain.value = muted ? 0 : 0.9;
+}
+muteBtn.addEventListener("click", () => {
+  muted = !muted;
+  try { localStorage.setItem("ocgen-muted", muted ? "1" : "0"); } catch (e) {}
+  audio(); syncMute();
+});
+syncMute();
+
+const status = document.getElementById("soundStatus");
+function loadClip(input, label, assign) {
+  input.addEventListener("change", async () => {
+    const f = input.files && input.files[0];
+    if (!f) return;
+    const a = audio();
+    if (!a) { status.textContent = "This browser has no Web Audio support, so custom clips can't play."; status.className = "sound-status err"; return; }
+    try {
+      const buf = await a.decodeAudioData(await f.arrayBuffer());
+      assign(buf);
+      status.textContent = `${label}: using "${f.name}" (${buf.duration.toFixed(1)} s).`;
+      status.className = "sound-status";
+    } catch (e) {
+      status.textContent = `${label}: "${f.name}" could not be decoded (${e && e.name ? e.name : "unknown error"}). Try an MP3, WAV or OGG file.`;
+      status.className = "sound-status err";
+    }
+  });
+}
+loadClip(document.getElementById("jingleFile"), "Jingle", (b) => { customJingle = b; });
+loadClip(document.getElementById("ringFile"), "Ring sound", (b) => { customRing = b; });
+
+/* ================= Boot ================= */
+reelName.setIdle(); reelAnimal.setIdle();
+resize();
+window.addEventListener("resize", () => {
+  resize();
+  if (phase === "revealed") { fitLine(rvName); fitLine(rvAnimal); }
+});
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (phase === "idle") { reelName.setIdle(); reelAnimal.setIdle(); } resize(); });
+})();
+</script>
+<!-- ARTIFACT-BODY-END -->
+</html>
