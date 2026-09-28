@@ -1,0 +1,12 @@
+{
+  "name": "hedgehog-oc-machine",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/smoke.mjs",
+    "check-wiki": "node tools/check-wiki.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  }
+}
