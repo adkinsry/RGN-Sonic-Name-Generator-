@@ -69,3 +69,9 @@ Run `check-wiki` whenever you add or rename a species. Many animal names land on
 ## History
 
 This started in the RoboList repo (closed PR adkinsry/RoboList#147) and was moved here with its commit history.
+
+## License
+
+The code and word lists are released into the public domain under [the Unlicense](LICENSE).
+
+The three fonts embedded in `index.html` (Titan One, Nunito, Press Start 2P) are not covered by that dedication. They stay under the [SIL Open Font License 1.1](https://openfontlicense.org/), which allows embedding and redistribution. Sonic the Hedgehog is a Sega trademark, and this fan project isn't affiliated with Sega.

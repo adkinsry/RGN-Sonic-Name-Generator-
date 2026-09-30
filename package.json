@@ -1,6 +1,7 @@
 {
   "name": "hedgehog-oc-machine",
   "private": true,
+  "license": "Unlicense",
   "type": "module",
   "scripts": {
     "test": "node tests/smoke.mjs",
