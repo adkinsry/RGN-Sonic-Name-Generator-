@@ -383,7 +383,7 @@ dialog.sounds::backdrop { background: rgba(6, 18, 58, .6); }
     <div class="rv-the">the</div>
     <a class="rv-line rv-animal" id="rvAnimal" target="_blank" rel="noopener noreferrer"></a>
     <div class="rv-tag">ORIGINAL CHARACTER · DO NOT STEAL</div>
-    <div class="rv-hint">tap the species for a photo + Wikipedia</div>
+    <div class="rv-hint" id="rvHint">tap the species for a photo + Wikipedia</div>
   </div>
 </div>
 <canvas id="fx" aria-hidden="true"></canvas>
@@ -404,19 +404,19 @@ const NAMES_PLAIN = ["Todd", "Kate", "Gary", "Brenda", "Doug", "Linda", "Kevin",
 const NAMES_MODERN = ["Aiden", "Jaxon", "Brayden", "Kayden", "Nevaeh", "Paisley", "Maverick", "Oakley", "Everly", "Kinsley", "Ryker", "Bentley", "Brantley", "Jayceon", "Zayden", "Rylee", "Braxton", "Kaison", "Ezra", "Harper", "Legend", "Knox", "Remington", "Hudson", "Sutton", "Nova", "Beckham", "Kashton", "Maddox", "Jaxtyn", "Brynlee", "Khaleesi", "Zaylee", "Crew", "Kylo", "Bodhi", "Journee", "Ryleigh", "Axton", "Kyrie", "Ledger", "Oaklynn", "Tatum", "Blakely", "Kaiden", "Colter", "Zion", "Emberly", "Denver", "Truett", "Kairo", "Zaiden", "Jaylen", "Kingston", "Rylan", "Adalyn", "Everleigh", "Saylor", "Kenzie", "Brixton", "Camden", "Dax", "Greyson", "Haisley", "Jace", "Kayce", "Lincoln", "Lux", "Marlowe", "Nash", "Onyx", "Presley", "Quinn", "Ridge", "Rowan", "Sawyer", "Stetson", "Tenley", "Titan", "Wrenley", "Zander", "Aspen", "Bexley", "Cash", "Dallas", "Emerson", "Finley", "Gunner", "Hattie", "Indie", "Jett", "Kace", "Lennox", "Memphis", "Navy", "Oakland", "Palmer", "Rhett", "Waylon", "Wilder"];
 // Sega-style one-word names. Canon names (Sonic, Tails, Shadow, Blaze, Silver,
 // Rouge, Espio, Vector, Jet, Wave, Storm, Surge, Tangle, Whisper, Mighty, Ray,
-// Bean, Bark, Fang, Nack, Honey, Cream, Cosmo, Marine, Sticks, Clutch, Kit...)
+// Bean, Bark, Fang, Nack, Honey, Cream, Cosmo, Marine, Sticks, Clutch, Kit, Rough, Tumble...)
 // are deliberately left out so every result reads as a new character.
-const NAMES_SEGA = ["Zoom", "Dash", "Bolt", "Skid", "Blitz", "Rumble", "Clank", "Grind", "Drift", "Flicker", "Rivet", "Torque", "Scuttle", "Nimbus", "Quill", "Jolt", "Swoop", "Glide", "Crag", "Flint", "Ember", "Vortex", "Static", "Ricochet", "Nitro", "Turbo", "Ripple", "Tumble", "Spindle", "Cinder", "Gale", "Dynamo", "Twister", "Piston", "Rattle", "Sprocket", "Zephyr", "Ozone", "Riff", "Slate", "Grit", "Hex", "Tempo", "Flux", "Fizz", "Pogo", "Sonar", "Pulse", "Skate", "Torrent", "Axle", "Brisk", "Scorch", "Quasar", "Rebel", "Crank", "Zipline", "Volt", "Mach", "Burst", "Comet", "Rocket", "Flare", "Frost", "Gust", "Quake", "Spark", "Zap", "Whirl", "Dart", "Streak", "Glimmer", "Shimmer", "Cobalt", "Indigo", "Scarlet", "Sable", "Bramble", "Thistle", "Pepper", "Chili", "Mocha", "Biscuit", "Pickle", "Nacho", "Widget", "Gizmo", "Wrench", "Lugnut", "Chrome", "Fuse", "Blip", "Pixel", "Byte", "Glitch", "Echo", "Radar", "Beacon", "Photon", "Neon", "Glacier", "Dune", "Reef", "Lagoon", "Tide", "Squall", "Monsoon", "Blizzard", "Typhoon", "Avalanche", "Boulder", "Pebble", "Haze", "Throttle", "Gear", "Zigzag", "Rascal", "Ruckus", "Tango", "Groove"];
+const NAMES_SEGA = ["Zoom", "Dash", "Bolt", "Skid", "Blitz", "Rumble", "Clank", "Grind", "Drift", "Flicker", "Rivet", "Torque", "Scuttle", "Nimbus", "Quill", "Jolt", "Swoop", "Glide", "Crag", "Flint", "Ember", "Vortex", "Static", "Ricochet", "Nitro", "Turbo", "Ripple", "Scamper", "Spindle", "Cinder", "Gale", "Dynamo", "Twister", "Piston", "Rattle", "Sprocket", "Zephyr", "Ozone", "Riff", "Slate", "Grit", "Hex", "Tempo", "Flux", "Fizz", "Pogo", "Sonar", "Pulse", "Skate", "Torrent", "Axle", "Brisk", "Scorch", "Quasar", "Rebel", "Crank", "Zipline", "Volt", "Mach", "Burst", "Comet", "Rocket", "Flare", "Frost", "Gust", "Quake", "Spark", "Zap", "Whirl", "Dart", "Streak", "Glimmer", "Shimmer", "Cobalt", "Indigo", "Scarlet", "Sable", "Bramble", "Thistle", "Pepper", "Chili", "Mocha", "Biscuit", "Pickle", "Nacho", "Widget", "Gizmo", "Wrench", "Lugnut", "Chrome", "Fuse", "Blip", "Pixel", "Byte", "Glitch", "Echo", "Radar", "Beacon", "Photon", "Neon", "Glacier", "Dune", "Reef", "Lagoon", "Tide", "Squall", "Monsoon", "Blizzard", "Typhoon", "Avalanche", "Boulder", "Pebble", "Haze", "Throttle", "Gear", "Zigzag", "Rascal", "Ruckus", "Tango", "Groove"];
 const NAME_POOLS = [NAMES_PLAIN, NAMES_MODERN, NAMES_SEGA];
 
 // Mostly odd creatures; pets and farm animals get a small share on purpose.
-// Hedgehog, fox and echidna are out: those three are already taken.
-const ANIMALS_ODD = ["Aye-aye", "Axolotl", "Pangolin", "Okapi", "Tapir", "Quokka", "Numbat", "Quoll", "Tarsier", "Binturong", "Fossa", "Saiga", "Gerenuk", "Dik-dik", "Kinkajou", "Coati", "Tenrec", "Solenodon", "Hyrax", "Aardwolf", "Aardvark", "Capybara", "Cassowary", "Shoebill", "Hoatzin", "Kakapo", "Kea", "Takahe", "Tuatara", "Blobfish", "Narwhal", "Dugong", "Manatee", "Olm", "Hellbender", "Mudskipper", "Sunfish", "Oarfish", "Anglerfish", "Frilled Shark", "Goblin Shark", "Wobbegong", "Nudibranch", "Mantis Shrimp", "Coconut Crab", "Horseshoe Crab", "Pistol Shrimp", "Sea Pig", "Giant Isopod", "Tardigrade", "Pika", "Jerboa", "Springhare", "Markhor", "Takin", "Babirusa", "Warthog", "Peccary", "Maned Wolf", "Dhole", "Bush Dog", "Raccoon Dog", "Civet", "Genet", "Linsang", "Mongoose", "Meerkat", "Honey Badger", "Wolverine", "Fisher", "Marten", "Tayra", "Zorilla", "Olingo", "Ringtail", "Red Panda", "Slow Loris", "Bushbaby", "Potto", "Colugo", "Sugar Glider", "Bilby", "Bandicoot", "Wombat", "Cuscus", "Tree Kangaroo", "Platypus", "Thylacine", "Dodo", "Pademelon", "Potoroo", "Bettong", "Gharial", "Caiman", "Gila Monster", "Thorny Devil", "Frilled Lizard", "Basilisk", "Chuckwalla", "Komodo Dragon", "Skink", "Caecilian", "Glass Frog", "Purple Frog", "Mata Mata", "Snapping Turtle", "Secretary Bird", "Frogmouth", "Potoo", "Oilbird", "Hornbill", "Toucan", "Puffin", "Blue-footed Booby", "Frigatebird", "Lyrebird", "Bowerbird", "Hoopoe", "Roadrunner", "Kiwi", "Quetzal", "Ibis", "Marabou Stork", "Condor", "Harpy Eagle", "Albatross", "Cuttlefish", "Nautilus", "Vampire Squid", "Dumbo Octopus", "Leafy Seadragon", "Seahorse", "Lamprey", "Hagfish", "Coelacanth", "Arapaima", "Sawfish", "Manta Ray", "Beluga", "Vaquita", "Walrus", "Elephant Seal", "Sea Otter", "Muskox", "Ibex", "Pronghorn", "Addax", "Kudu", "Klipspringer", "Chevrotain", "Muntjac", "Moose", "Mandrill", "Proboscis Monkey", "Gelada", "Uakari", "Tamarin", "Howler Monkey", "Siamang", "Anteater", "Armadillo", "Sloth", "Naked Mole-rat", "Star-nosed Mole", "Desman", "Shrew", "Viscacha", "Mara", "Agouti", "Porcupine", "Marmot", "Dormouse", "Lemming", "Sea Urchin", "Sea Cucumber", "Firefly", "Stag Beetle", "Dung Beetle", "Mantis", "Stick Insect", "Cicada", "Luna Moth", "Dragonfly", "Scorpion", "Jumping Spider", "Velvet Worm", "Leech", "Pufferfish", "Honey Possum", "Serval", "Margay", "Jaguarundi", "Pallas's Cat", "Sand Cat", "Clouded Leopard", "Sun Bear", "Spectacled Bear", "Tasmanian Devil", "Dunnart", "Marsupial Mole", "Degu", "Paca", "Pacarana", "Hutia", "Gundi", "Kangaroo Rat", "Elephant Shrew", "Golden Mole", "Moonrat", "Tree Shrew", "Indri", "Sifaka", "Mouse Lemur", "Douc", "Drill", "Bonobo", "Bongo", "Anoa", "Bharal", "Royal Antelope", "Vicuña", "Pudu", "Water Deer", "Musk Deer", "Pygmy Hippo", "Leopard Seal", "Boto", "Grison", "Stink Badger", "Hog Badger", "Cacomistle", "Ethiopian Wolf", "Painted Dog", "Striped Hyena", "Falanouc", "Kusimanse", "Flying Fox", "Vampire Bat", "Bumblebee Bat", "Hammer-headed Bat", "Tamandua", "Silky Anteater", "Pink Fairy Armadillo", "Mammoth", "Tinamou", "Rockhopper Penguin", "Anhinga", "Hamerkop", "Jabiru", "Lammergeier", "Capercaillie", "Curassow", "Malleefowl", "Kagu", "Sunbittern", "Bustard", "Seriema", "Jacana", "Phalarope", "Skimmer", "Sandgrouse", "Nicobar Pigeon", "Turaco", "Burrowing Owl", "Elf Owl", "Sword-billed Hummingbird", "Bee Hummingbird", "Kookaburra", "Motmot", "Aracari", "Honeyguide", "Wryneck", "Jacamar", "Umbrellabird", "Cock-of-the-rock", "Manakin", "Pitta", "Fairywren", "Drongo", "Currawong", "Riflebird", "Wallcreeper", "Oxpecker", "Bobolink", "Tokay Gecko", "Leaf-tailed Gecko", "Panther Chameleon", "Uromastyx", "Marine Iguana", "Horned Lizard", "Perentie", "Tegu", "Caiman Lizard", "Armadillo Lizard", "Slowworm", "Vine Snake", "Flying Snake", "Taipan", "Gaboon Viper", "Bushmaster", "Sidewinder", "Softshell Turtle", "Pig-nosed Turtle", "Alligator Snapping Turtle", "Mudpuppy", "Amphiuma", "Giant Salamander", "Poison Dart Frog", "Goliath Frog", "Surinam Toad", "Tomato Frog", "Darwin's Frog", "Hairy Frog", "Paradox Frog", "Lungfish", "Bichir", "Alligator Gar", "Arowana", "Electric Eel", "Glass Catfish", "Candiru", "Goonch", "Frogfish", "Trumpetfish", "Stonefish", "Lumpsucker", "Snailfish", "Goliath Grouper", "Napoleon Wrasse", "Opah", "Cowfish", "Mandarinfish", "Icefish", "Viperfish", "Hatchetfish", "Barreleye", "Gulper Eel", "Fangtooth", "Torpedo Ray", "Guitarfish", "Megamouth Shark", "Greenland Shark", "Cookiecutter Shark", "Sawshark", "Epaulette Shark", "Swell Shark", "Blue-ringed Octopus", "Mimic Octopus", "Bobtail Squid", "Argonaut", "Cone Snail", "Yeti Crab", "Triops", "Vinegaroon", "Peacock Spider", "Diving Bell Spider", "Mole Cricket", "Antlion", "Atlas Moth", "Orchid Bee", "Tarantula Hawk", "Velvet Ant", "Bombardier Beetle", "Giant Water Bug", "Box Jellyfish", "Portuguese Man o' War", "Siphonophore", "Comb Jelly", "Glass Sponge", "Basket Star", "Salp", "Pyrosome", "Bobbit Worm", "Christmas Tree Worm", "Sea Angel", "Glass Octopus", "Flapjack Octopus", "Firefly Squid"];
+// Hedgehog, fox and echidna are out: those three are already taken (Flying Fox too, to avoid the look of one).
+const ANIMALS_ODD = ["Aye-aye", "Axolotl", "Pangolin", "Okapi", "Tapir", "Quokka", "Numbat", "Quoll", "Tarsier", "Binturong", "Fossa", "Saiga", "Gerenuk", "Dik-dik", "Kinkajou", "Coati", "Tenrec", "Solenodon", "Hyrax", "Aardwolf", "Aardvark", "Capybara", "Cassowary", "Shoebill", "Hoatzin", "Kakapo", "Kea", "Takahe", "Tuatara", "Blobfish", "Narwhal", "Dugong", "Manatee", "Olm", "Hellbender", "Mudskipper", "Sunfish", "Oarfish", "Anglerfish", "Frilled Shark", "Goblin Shark", "Wobbegong", "Nudibranch", "Mantis Shrimp", "Coconut Crab", "Horseshoe Crab", "Pistol Shrimp", "Sea Pig", "Giant Isopod", "Tardigrade", "Pika", "Jerboa", "Springhare", "Markhor", "Takin", "Babirusa", "Warthog", "Peccary", "Maned Wolf", "Dhole", "Bush Dog", "Raccoon Dog", "Civet", "Genet", "Linsang", "Mongoose", "Meerkat", "Honey Badger", "Wolverine", "Fisher", "Marten", "Tayra", "Zorilla", "Olingo", "Ringtail", "Red Panda", "Slow Loris", "Bushbaby", "Potto", "Colugo", "Sugar Glider", "Bilby", "Bandicoot", "Wombat", "Cuscus", "Tree Kangaroo", "Platypus", "Thylacine", "Dodo", "Pademelon", "Potoroo", "Bettong", "Gharial", "Caiman", "Gila Monster", "Thorny Devil", "Frilled Lizard", "Basilisk", "Chuckwalla", "Komodo Dragon", "Skink", "Caecilian", "Glass Frog", "Purple Frog", "Mata Mata", "Snapping Turtle", "Secretary Bird", "Frogmouth", "Potoo", "Oilbird", "Hornbill", "Toucan", "Puffin", "Blue-footed Booby", "Frigatebird", "Lyrebird", "Bowerbird", "Hoopoe", "Roadrunner", "Kiwi", "Quetzal", "Ibis", "Marabou Stork", "Condor", "Harpy Eagle", "Albatross", "Cuttlefish", "Nautilus", "Vampire Squid", "Dumbo Octopus", "Leafy Seadragon", "Seahorse", "Lamprey", "Hagfish", "Coelacanth", "Arapaima", "Sawfish", "Manta Ray", "Beluga", "Vaquita", "Walrus", "Elephant Seal", "Sea Otter", "Muskox", "Ibex", "Pronghorn", "Addax", "Kudu", "Klipspringer", "Chevrotain", "Muntjac", "Moose", "Mandrill", "Proboscis Monkey", "Gelada", "Uakari", "Tamarin", "Howler Monkey", "Siamang", "Anteater", "Armadillo", "Sloth", "Naked Mole-rat", "Star-nosed Mole", "Desman", "Shrew", "Viscacha", "Mara", "Agouti", "Porcupine", "Marmot", "Dormouse", "Lemming", "Sea Urchin", "Sea Cucumber", "Firefly", "Stag Beetle", "Dung Beetle", "Mantis", "Stick Insect", "Cicada", "Luna Moth", "Dragonfly", "Scorpion", "Jumping Spider", "Velvet Worm", "Leech", "Pufferfish", "Honey Possum", "Serval", "Margay", "Jaguarundi", "Pallas's Cat", "Sand Cat", "Clouded Leopard", "Sun Bear", "Spectacled Bear", "Tasmanian Devil", "Dunnart", "Marsupial Mole", "Degu", "Paca", "Pacarana", "Hutia", "Gundi", "Kangaroo Rat", "Elephant Shrew", "Golden Mole", "Moonrat", "Tree Shrew", "Indri", "Sifaka", "Mouse Lemur", "Douc", "Drill", "Bonobo", "Bongo", "Anoa", "Bharal", "Royal Antelope", "Vicuña", "Pudu", "Water Deer", "Musk Deer", "Pygmy Hippo", "Leopard Seal", "Boto", "Grison", "Stink Badger", "Hog Badger", "Cacomistle", "Ethiopian Wolf", "Painted Dog", "Striped Hyena", "Falanouc", "Kusimanse", "Nilgai", "Vampire Bat", "Bumblebee Bat", "Hammer-headed Bat", "Tamandua", "Silky Anteater", "Pink Fairy Armadillo", "Mammoth", "Tinamou", "Rockhopper Penguin", "Anhinga", "Hamerkop", "Jabiru", "Lammergeier", "Capercaillie", "Curassow", "Malleefowl", "Kagu", "Sunbittern", "Bustard", "Seriema", "Jacana", "Phalarope", "Skimmer", "Sandgrouse", "Nicobar Pigeon", "Turaco", "Burrowing Owl", "Elf Owl", "Sword-billed Hummingbird", "Bee Hummingbird", "Kookaburra", "Motmot", "Aracari", "Honeyguide", "Wryneck", "Jacamar", "Umbrellabird", "Cock-of-the-rock", "Manakin", "Pitta", "Fairywren", "Drongo", "Currawong", "Riflebird", "Wallcreeper", "Oxpecker", "Bobolink", "Tokay Gecko", "Leaf-tailed Gecko", "Panther Chameleon", "Uromastyx", "Marine Iguana", "Horned Lizard", "Perentie", "Tegu", "Caiman Lizard", "Armadillo Lizard", "Slowworm", "Vine Snake", "Flying Snake", "Taipan", "Gaboon Viper", "Bushmaster", "Sidewinder", "Softshell Turtle", "Pig-nosed Turtle", "Alligator Snapping Turtle", "Mudpuppy", "Amphiuma", "Giant Salamander", "Poison Dart Frog", "Goliath Frog", "Surinam Toad", "Tomato Frog", "Darwin's Frog", "Hairy Frog", "Paradox Frog", "Lungfish", "Bichir", "Alligator Gar", "Arowana", "Electric Eel", "Glass Catfish", "Candiru", "Goonch", "Frogfish", "Trumpetfish", "Stonefish", "Lumpsucker", "Snailfish", "Goliath Grouper", "Napoleon Wrasse", "Opah", "Cowfish", "Mandarinfish", "Icefish", "Viperfish", "Hatchetfish", "Barreleye", "Gulper Eel", "Fangtooth", "Torpedo Ray", "Guitarfish", "Megamouth Shark", "Greenland Shark", "Cookiecutter Shark", "Sawshark", "Epaulette Shark", "Swell Shark", "Blue-ringed Octopus", "Mimic Octopus", "Bobtail Squid", "Argonaut", "Cone Snail", "Yeti Crab", "Triops", "Vinegaroon", "Peacock Spider", "Diving Bell Spider", "Mole Cricket", "Antlion", "Atlas Moth", "Orchid Bee", "Tarantula Hawk", "Velvet Ant", "Bombardier Beetle", "Giant Water Bug", "Box Jellyfish", "Portuguese Man o' War", "Siphonophore", "Comb Jelly", "Glass Sponge", "Basket Star", "Salp", "Pyrosome", "Bobbit Worm", "Christmas Tree Worm", "Sea Angel", "Glass Octopus", "Flapjack Octopus", "Firefly Squid"];
 const ANIMALS_COMMON = ["Cat", "Dog", "Goat", "Hamster", "Goldfish", "Llama", "Chicken", "Duck", "Cow", "Donkey", "Parakeet", "Sheep", "Rabbit", "Horse", "Guinea Pig", "Turkey", "Pig", "Pony", "Cockatiel", "Gerbil", "Ferret", "Mule", "Ox", "Rooster", "Alpaca", "Goose", "Corgi", "Pug", "Beagle", "Poodle", "Dachshund", "Chihuahua"];
 const COMMON_SHARE = 0.1;
 // Wikipedia article per species. Default is the sentence-case name ("Red Panda" -> "Red panda");
 // the map covers names that would land on a disambiguation page or a differently titled article.
-// Every one of the 410 slugs was checked against the MediaWiki API on 2026-09-28:
+// Every one of the 410 slugs was checked against the MediaWiki API on 2026-09-30:
 // 0 missing, 0 disambiguation pages.
 const WIKI = {"Fisher": "Fisher (animal)","Mara": "Mara (mammal)","Genet": "Genet (animal)","Fossa": "Fossa (animal)","Kiwi": "Kiwi (bird)","Drill": "Drill (animal)","Skimmer": "Skimmer (bird)","Beluga": "Beluga whale","Argonaut": "Argonaut (animal)","Basilisk": "Basiliscus (lizard)","Sunfish": "Ocean sunfish","Turkey": "Turkey (bird)","Chihuahua": "Chihuahua (dog)","Cow": "Cattle","Corgi": "Welsh Corgi","Mammoth": "Mammoth","Boto": "Amazon river dolphin","Painted Dog": "African wild dog","Dumbo Octopus": "Grimpoteuthis","Sea Pig": "Scotoplanes","Stick Insect": "Phasmatodea","Velvet Worm": "Onychophora","Pistol Shrimp": "Alpheidae","Pufferfish": "Tetraodontidae","Bushbaby": "Galago","Zorilla": "Striped polecat","Tree Kangaroo": "Tree-kangaroo","Secretary Bird": "Secretarybird","Takahe": "Takahē","Kakapo": "Kākāpō","Saiga": "Saiga antelope","Goliath Grouper": "Atlantic goliath grouper","Napoleon Wrasse": "Humphead wrasse","Water Deer": "Water deer","Mudpuppy": "Necturus","Frilled Lizard": "Chlamydosaurus","Blobfish": "Psychrolutes marcidus","Bongo": "Bongo (antelope)","Jacana": "Jacanidae","Leaf-tailed Gecko": "Uroplatus","Vine Snake": "Ahaetulla","Bushmaster": "Lachesis (genus)","Sidewinder": "Crotalus cerastes","Glass Catfish": "Kryptopterus vitreolus","Candiru": "Candiru (fish)","Mandarinfish": "Synchiropus splendidus","Icefish": "Channichthyidae","Hatchetfish": "Marine hatchetfish"};
 const wikiUrl = (name) => "https://en.wikipedia.org/wiki/" + encodeURIComponent((WIKI[name] || (name[0].toUpperCase() + name.slice(1).toLowerCase())).replace(/ /g, "_"));
@@ -475,7 +475,7 @@ function tick(pan) {
   const src = ac.createBufferSource(); src.buffer = noiseBuf;
   const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2600; bp.Q.value = 1.5;
   const g = ac.createGain();
-  // Levels are measured, not guessed (see HANDOFF): this puts the clack near peak 0.3.
+  // Levels are measured, not guessed (see the Sound table in README.md): this puts the clack near peak 0.3.
   g.gain.setValueAtTime(1.6, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
   const p = panner(pan);
   src.connect(bp).connect(g).connect(p).connect(master);
@@ -621,6 +621,7 @@ function makeReel(el, flipEl, blurDev, blurId, source, pan) {
       if (t >= 1) { reel.offset = a.from + a.dist; reel.anim = null; reel.render(0); return true; }
       return false;
     },
+    settled() { return !reel.anim && Math.abs(reel.flip) < 0.05; },
     decayFlip(dt) {
       reel.flip *= Math.exp(-dt * 16);
       const side = el.parentElement.classList.contains("name") ? -1 : 1;
@@ -756,6 +757,7 @@ function spawnCritters() {
       vx: (Math.random() < 0.5 ? -1 : 1) * (60 + Math.random() * 140),
       vy: -(380 + Math.random() * 380),
       wait: 0, bird: kind === 1,
+      age: 0, life: 9 + Math.random() * 3, // hop for ~10 s, blink, then leave
     });
   }
 }
@@ -763,6 +765,7 @@ function stepCritters(dt) {
   const gy = groundY();
   for (const c of critters) {
     const size = 10 * c.scale;
+    c.age += dt;
     c.vy += (c.bird && c.vy > 0 ? 500 : 1300) * dt;
     c.x += c.vx * dt; c.y += c.vy * dt;
     if (c.x < 0) { c.x = 0; c.vx = Math.abs(c.vx); }
@@ -777,9 +780,11 @@ function stepCritters(dt) {
       }
     }
   }
+  critters = critters.filter((c) => c.age < c.life);
 }
 function drawCritters(now) {
   for (const c of critters) {
+    if (c.age > c.life - 1.2 && Math.floor(c.age * 14) % 2) continue; // blink before leaving, like the rings
     const size = 10 * c.scale;
     ctx.save();
     const squash = c.vy === 0 ? 0.88 : 1;
@@ -805,6 +810,7 @@ const hudRings = document.getElementById("hudRings");
 const copyBtn = document.getElementById("copyBtn");
 const shareBtn = document.getElementById("shareBtn");
 const canShare = typeof navigator.share === "function";
+if (!window.matchMedia("(hover: none)").matches) document.getElementById("rvHint").textContent = "click the species for a photo + Wikipedia";
 
 let phase = "idle"; // idle | spinning | holding | revealed
 let spinStart = 0, score = 0, ringTotal = 0;
@@ -922,6 +928,7 @@ function frame(now) {
   const dt = Math.min(0.05, (now - lastFrame) / 1000);
   lastFrame = now;
 
+  let reelsIdle = false;
   if (phase === "spinning") {
     const a = reelName.update(now, dt);
     const b = reelAnimal.update(now, dt);
@@ -934,6 +941,7 @@ function frame(now) {
     }
   } else {
     reelName.update(now, dt); reelAnimal.update(now, dt);
+    reelsIdle = reelName.settled() && reelAnimal.settled();
   }
 
   ctx.clearRect(0, 0, W, H);
@@ -943,8 +951,9 @@ function frame(now) {
     drawCritters(now);
   }
 
-  // Keep animating while anything moves; the reveal keeps its critters until the next spin.
-  if (phase === "idle") { running = false; return; }
+  // Keep animating while anything moves, then stop so an idle page costs nothing.
+  // "holding" also stops here: showReveal() kicks the loop again.
+  if (reelsIdle && !rings.length && !critters.length) { running = false; return; }
   requestAnimationFrame(frame);
 }
 
@@ -955,6 +964,7 @@ go.addEventListener("click", () => {
 });
 document.addEventListener("keydown", (e) => {
   if (e.key === " " && e.target === document.body && !clipsDialog.open) { e.preventDefault(); go.click(); }
+  else if (e.key === "Escape" && phase === "revealed" && !clipsDialog.open) { clearReveal(); phase = "idle"; }
 });
 
 /* ================= Sound controls ================= */
