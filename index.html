@@ -1301,8 +1301,9 @@ const introText = document.getElementById("introText");
 const introSr = document.getElementById("introSr");
 const createBtn = document.getElementById("createBtn");
 
-const CHAR_MS = 36, LINE_PAUSE_MS = 380;            // greeting typing speed
-const CARD_FIRST_MS = 250, CARD_GAP_MS = 420, CARD_FLIGHT_MS = 750; // fan-art card launches
+const CHAR_MS = 55, LINE_PAUSE_MS = 450;            // greeting typing speed
+// Fan-art cards launch one at a time: each finishes its flight before the next one leaves the centre.
+const CARD_FIRST_MS = 300, CARD_FLIGHT_MS = 950, CARD_GAP_MS = CARD_FLIGHT_MS + 100;
 let introTimers = [], introAnims = [], introDone = false, cardEls = [];
 const later = (ms, fn) => introTimers.push(setTimeout(fn, ms));
 
@@ -1433,13 +1434,13 @@ function runIntro(name) {
     const keyframes = reduceMotion
       ? [{ opacity: 0 }, { opacity: 1 }]
       : [
-          { transform: `${from} rotate(${+el.dataset.tilt - 720}deg) scale(0.08)`, opacity: 0 },
-          { opacity: 1, offset: 0.15 },
+          { transform: `${from} rotate(${+el.dataset.tilt - 540}deg) scale(0.12)`, opacity: 0 },
+          { opacity: 1, offset: 0.1 },
           { transform: el.style.transform },
         ];
     introAnims.push(el.animate(keyframes, {
       duration: reduceMotion ? 300 : CARD_FLIGHT_MS, delay, fill: "backwards",
-      easing: "cubic-bezier(.15, .75, .3, 1.08)",
+      easing: "cubic-bezier(.3, .6, .35, 1.06)",
     }));
     const pan = Math.max(-0.7, Math.min(0.7, ((r.l + w / 2) / W) * 2 - 1));
     later(delay, () => sfx("whoosh", pan));

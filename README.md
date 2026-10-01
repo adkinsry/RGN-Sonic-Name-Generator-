@@ -13,7 +13,7 @@ The whole app is one self-contained file, `index.html` (~160 KB before you add y
 ## What it does
 
 1. **Start screen:** type your name and press Enter (or **Let's Go!**).
-2. **Intro:** "Hey (Name), let's see your best Sonic fan art! Are you ready to meet your character?" types itself out while up to six fan-art cards spin out of the centre, growing, and land one by one in free spots around the text. It takes about 3.5 s; Enter, Space or a tap skips to the end. On short landscape phones only four cards fit.
+2. **Intro:** "Hey (Name), let's see your best Sonic fan art! Are you ready to meet your character?" types itself out while up to six fan-art cards spin out of the centre one at a time, growing, and land in free spots around the text; the next one leaves as the last one lands. It takes about 6.5 s; Enter, Space or a tap skips to the end. On short landscape phones only four cards fit.
 3. **Create My Character** appears. Pressing it spins both reels for about 5 seconds, Price-is-Right style. The name reel stops at 4.3 s and the species reel at 5.0 s.
 4. After 1.5 s of stillness, the name slams in with a ring burst, a ring chime, an act-clear fanfare, and pixel critters that hop around for about 10 s and then leave. Once everything settles the page stops animating, so it doesn't drain a phone battery while it sits open.
 5. Tap the species to open its Wikipedia article, which has a photo. **Copy name** and **Share** (on phones) appear under the result. **Create Another** spins again.
