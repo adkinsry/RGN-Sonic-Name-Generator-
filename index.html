@@ -24,8 +24,6 @@
   --sky-top: #1848C8;
   --sky-mid: #4F9BFF;
   --sky-low: #BFE3FF;
-  --hill: #2E9E43;
-  --hill-dark: #1F7A33;
   --dirt-a: #B8561E;
   --dirt-b: #7A3410;
   --grass: #45C04A;
@@ -50,11 +48,12 @@ body {
   overflow: hidden auto; /* scrolls only when the machine is taller than the screen */
   color: var(--white);
   font-family: var(--body);
-  background:
-    radial-gradient(ellipse 40% 18% at 12% 100%, var(--hill) 60%, transparent 61%) 0 calc(100% - var(--ground-h) + 30px) / 100% 100% no-repeat,
-    radial-gradient(ellipse 34% 22% at 58% 100%, var(--hill-dark) 60%, transparent 61%) 0 calc(100% - var(--ground-h) + 30px) / 100% 100% no-repeat,
-    radial-gradient(ellipse 30% 14% at 92% 100%, var(--hill) 60%, transparent 61%) 0 calc(100% - var(--ground-h) + 30px) / 100% 100% no-repeat,
-    linear-gradient(var(--sky-top) 0%, var(--sky-mid) 50%, var(--sky-low) 78%);
+  background: linear-gradient(var(--sky-top) 0%, var(--sky-mid) 50%, var(--sky-low) 78%);
+}
+/* Original Green Hill-style backdrop: checkered loop, palms, water, mountains. Anchored right so phones keep the loop. */
+.zone {
+  position: fixed; left: 0; bottom: calc(var(--ground-h) - 4px); z-index: 0;
+  width: 100%; height: min(58vh, 470px); pointer-events: none;
 }
 .ground {
   position: fixed; left: 0; right: 0; bottom: 0; height: var(--ground-h);
@@ -74,7 +73,7 @@ body {
 
 /* ---------- HUD ---------- */
 .hud {
-  position: relative; z-index: 30;
+  position: relative; z-index: 40;
   display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
   font-family: var(--hud); font-size: 11px; line-height: 1.9;
   text-shadow: 2px 2px 0 var(--navy-deep);
@@ -180,6 +179,9 @@ body {
   padding-top: 14px;
 }
 .controls .row-btns { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 12px; }
+/* The controls sit above the reveal overlay; only the buttons themselves catch taps, so the species link stays tappable. */
+.controls, .controls .row-btns { pointer-events: none; }
+.controls button { pointer-events: auto; }
 .side {
   font: 800 14px var(--body); color: var(--white); background: var(--navy);
   border: 3px solid var(--navy-deep); border-radius: 999px; padding: 10px 16px; cursor: pointer;
@@ -230,6 +232,79 @@ dialog.sounds::backdrop { background: rgba(6, 18, 58, .6); }
   border: 2px solid var(--navy); background: var(--white); color: var(--navy);
 }
 .sound-actions button.primary { background: var(--navy); color: var(--white); }
+
+/* ---------- Start screen and intro ---------- */
+/* Until the intro ends, the machine keeps its layout (reels and bulbs measure it) but stays out of sight. */
+body[data-stage="start"] .stage, body[data-stage="start"] .controls,
+body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility: hidden; }
+.start, .intro {
+  position: fixed; inset: 0; z-index: 35;
+  display: grid; place-items: center; box-sizing: border-box;
+  padding: calc(64px + env(safe-area-inset-top, 0px)) 16px calc(var(--ground-h) + 16px + env(safe-area-inset-bottom, 0px));
+}
+.start-card {
+  width: min(26rem, 100%); box-sizing: border-box;
+  display: grid; gap: 12px; justify-items: center; text-align: center;
+  padding: 24px 22px 18px;
+  background: linear-gradient(var(--navy), var(--navy-deep));
+  border: 4px solid var(--gold); border-radius: 20px;
+  box-shadow: 0 6px 0 var(--gold-dark), 0 14px 30px rgba(6, 18, 58, .45);
+}
+.start-card.shake { animation: shake .35s; }
+.start-title {
+  margin: 0; font: 400 clamp(26px, 7vw, 40px)/1.05 var(--display); color: var(--gold);
+  -webkit-text-stroke: 2px var(--navy-deep); paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--navy-deep); transform: skewX(-8deg);
+}
+.start-label { font: 11px/1.6 var(--hud); color: var(--white); letter-spacing: .06em; text-shadow: 2px 2px 0 var(--navy-deep); }
+.start-input {
+  width: 100%; box-sizing: border-box; padding: 10px 12px;
+  font: 800 22px var(--body); text-align: center; color: var(--navy-deep);
+  background: var(--white); border: 3px solid var(--navy-deep); border-radius: 12px;
+}
+.start-input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.start-err { margin: 0; min-height: 1.3em; font: 700 14px var(--body); color: #FFC2C2; }
+.intro-cards { position: absolute; inset: 0; overflow: hidden; }
+.intro-center {
+  position: relative; z-index: 2; width: min(36rem, 100%);
+  display: grid; gap: 16px; justify-items: center; text-align: center;
+}
+.intro-text {
+  margin: 0; font: 400 clamp(20px, min(5vw, 6.5vh), 40px)/1.15 var(--display); color: var(--white);
+  -webkit-text-stroke: 2px var(--navy-deep); paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--navy-deep); overflow-wrap: anywhere;
+}
+.intro-text .nm { color: var(--gold); }
+.intro-text .l2 { display: block; margin-top: .4em; font-size: .78em; }
+.intro-text .pend { visibility: hidden; } /* untyped text holds its space so the layout never jumps */
+#createBtn { visibility: hidden; }
+#createBtn.show { visibility: visible; animation: pop .45s cubic-bezier(.2, 1.6, .4, 1) both; }
+.intro.leaving { animation: fadeout .35s ease-in both; pointer-events: none; }
+.fan-card {
+  position: absolute; left: 0; top: 0; box-sizing: border-box; margin: 0;
+  display: grid; grid-template-rows: minmax(0, 1fr) auto;
+  padding: 6px 6px 0; background: #FFFFFF; border-radius: 4px;
+  box-shadow: 0 4px 0 rgba(6, 18, 58, .35), 0 10px 18px rgba(6, 18, 58, .3);
+  will-change: transform;
+}
+.fan-card::before { /* a strip of tape */
+  content: ""; position: absolute; top: -8px; left: 30%; width: 40%; height: 16px;
+  background: rgba(255, 238, 160, .8); transform: rotate(-4deg);
+}
+.fan-card img, .fan-card svg { display: block; width: 100%; height: 100%; object-fit: cover; background: #EEF4FF; }
+.fan-card figcaption {
+  padding: 4px 2px 6px; text-align: center; color: #222222;
+  font: 700 clamp(9px, 1.5vw, 13px)/1.15 "Comic Sans MS", "Chalkboard SE", "Comic Neue", var(--body);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+.fan-card.tiny { padding-bottom: 6px; }
+.fan-card.tiny figcaption { display: none; }
+.fan-card .credit { display: block; font-size: .8em; font-weight: 600; color: #5A5A5A; }
+@media (orientation: landscape) and (max-height: 500px) {
+  .intro-center { width: min(30rem, 60vw); } /* leave room for cards beside the greeting */
+}
+@keyframes shake { 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); } }
+@keyframes fadeout { to { opacity: 0; } }
 
 /* ---------- Reveal ---------- */
 .reveal {
@@ -313,10 +388,50 @@ dialog.sounds::backdrop { background: rgba(6, 18, 58, .6); }
   .flash { animation: none; opacity: 0; } /* no full-screen white flash */
   .rv-name, .rv-animal { animation: fadein .3s both; transform: skewX(-8deg); }
   .machine.live .bulbs i { animation: none; background: var(--gold); }
+  .start-card.shake { animation: none; }
 }
 </style>
 </head>
-<body>
+<body data-stage="start">
+<svg class="zone" aria-hidden="true" viewBox="0 0 1200 470" preserveAspectRatio="xMaxYMax slice">
+  <defs>
+    <pattern id="chk" width="28" height="28" patternUnits="userSpaceOnUse">
+      <rect width="28" height="28" fill="#B8561E"/><rect width="14" height="14" fill="#7A3410"/><rect x="14" y="14" width="14" height="14" fill="#7A3410"/>
+    </pattern>
+    <g id="palm">
+      <path d="M0 0 C 6 -40, 2 -80, 18 -120" fill="none" stroke="#7A3410" stroke-width="12" stroke-linecap="round"/>
+      <path d="M0 0 C 6 -40, 2 -80, 18 -120" fill="none" stroke="#C8762C" stroke-width="12" stroke-dasharray="7 9"/>
+      <g fill="#2E9E43" stroke="#1F7A33" stroke-width="3" stroke-linejoin="round">
+        <path d="M18 -120 C 0 -140, -40 -134, -58 -110 C -34 -122, -10 -122, 18 -120Z"/>
+        <path d="M18 -120 C 34 -142, 74 -140, 90 -114 C 66 -126, 42 -124, 18 -120Z"/>
+        <path d="M18 -120 C 8 -150, -24 -170, -46 -160 C -22 -154, 0 -140, 18 -120Z"/>
+        <path d="M18 -120 C 34 -156, 66 -168, 84 -152 C 62 -150, 38 -140, 18 -120Z"/>
+        <path d="M18 -120 C 22 -150, 16 -176, 4 -186 C 22 -170, 26 -146, 18 -120Z"/>
+      </g>
+    </g>
+  </defs>
+  <!-- Far mountains -->
+  <path d="M0 330 L120 210 L210 280 L330 170 L450 270 L560 200 L690 290 L800 190 L930 280 L1050 180 L1200 290 V360 H0Z" fill="#4E7FD8"/>
+  <path d="M0 330 L120 210 L150 240 L95 300 Z M330 170 L380 212 L300 290 Z M800 190 L850 232 L770 300 Z M1050 180 L1100 222 L1020 300 Z" fill="#6E9CF0"/>
+  <!-- Water with glints -->
+  <rect y="330" width="1200" height="140" fill="#2F6FE0"/>
+  <g stroke="#BFE3FF" stroke-width="3" stroke-linecap="round">
+    <path d="M40 346h40M190 362h26M330 350h44M520 368h30M660 348h40M860 364h28M1010 352h44M1130 370h26"/>
+  </g>
+  <!-- Near hills with checkered cliffs -->
+  <path d="M0 470 V380 C 60 340, 180 340, 260 380 C 320 352, 420 348, 500 384 V470Z" fill="url(#chk)"/>
+  <path d="M0 384 C 60 344, 180 344, 260 384 C 320 356, 420 352, 500 388" fill="none" stroke="#45C04A" stroke-width="14" stroke-linecap="round"/>
+  <!-- The loop: a checkered ring on a grassy base -->
+  <g transform="translate(1000 300)">
+    <path d="M0 -150 A150 150 0 1 1 -0.1 -150 Z M0 -96 A96 96 0 1 0 0.1 -96 Z" fill="url(#chk)" fill-rule="evenodd" stroke="#4A1E06" stroke-width="4"/>
+    <circle r="148" fill="none" stroke="#45C04A" stroke-width="12"/>
+    <circle r="96" fill="none" stroke="#2E8F33" stroke-width="6"/>
+  </g>
+  <path d="M760 470 V430 H1240 V470Z" fill="url(#chk)"/>
+  <use href="#palm" transform="translate(790 450)"/>
+  <use href="#palm" transform="translate(1176 446) scale(-0.9 0.9)"/>
+  <use href="#palm" transform="translate(150 372) scale(0.8)"/>
+</svg>
 <div class="ground" aria-hidden="true"></div>
 <div class="app">
   <header class="hud">
@@ -355,6 +470,25 @@ dialog.sounds::backdrop { background: rgba(6, 18, 58, .6); }
     <button class="clips-btn" id="clipsOpen" type="button" aria-haspopup="dialog">Use your own sound clips</button>
   </div>
 </div>
+
+<section class="start" id="start">
+  <form class="start-card" id="startForm" novalidate>
+    <h1 class="start-title">Hedgehog OC Machine</h1>
+    <label class="start-label" for="nameInput">ENTER YOUR NAME</label>
+    <input class="start-input" id="nameInput" name="name" maxlength="20" autocomplete="given-name" enterkeyhint="go" spellcheck="false">
+    <button class="go" type="submit">Let's Go!</button>
+    <p class="start-err" id="startErr" role="alert"></p>
+  </form>
+</section>
+
+<section class="intro" id="intro" hidden>
+  <div class="intro-cards" id="introCards" aria-hidden="true"></div>
+  <div class="intro-center" id="introCenter">
+    <p class="intro-text" id="introText" aria-hidden="true"></p>
+    <p class="sr" id="introSr"></p>
+    <button class="go" id="createBtn" type="button">Create My Character</button>
+  </div>
+</section>
 
 <dialog class="sounds" id="clipsDialog" aria-labelledby="clipsTitle">
   <form class="sound-panel" method="dialog">
@@ -434,7 +568,27 @@ const NAME_ITEMS = 52;       // how many entries blip past
 const ANIMAL_ITEMS = 64;
 const HOLD_MS = 1500;        // both reels stationary before the reveal
 
+/* ================= Embedded assets ================= */
+// Written by `npm run embed-assets` from assets/sounds/ and assets/fanart/. Keep the two markers:
+// the tool replaces everything between them.
+const EMBEDDED = /*ASSETS*/{"sounds":{},"fanart":[]}/*/ASSETS*/;
+
 /* ================= Audio ================= */
+// Every sound cue, the loudness an embedded file for it is matched to (dBFS RMS), and when it plays.
+const SFX_DB = {
+  start: -22,    // name entered
+  type: -34,     // each typed letter of the greeting
+  whoosh: -28,   // a fan-art card launches
+  land: -28,     // a card lands
+  ready: -20,    // "Create My Character" appears
+  press: -24,    // "Create My Character" pressed
+  tick: -27,     // wheel clicker
+  reelStop: -26, // a reel stops
+  ring: -26,     // ring burst on the reveal
+  jingle: -18,   // act-clear fanfare on the reveal
+};
+const embeddedSfx = {}; // cue -> { buf, gain }, filled once audio starts
+let sfxReady = Promise.resolve();
 let ac = null, master = null, noiseBuf = null;
 let muted = false;
 let customJingle = null, customRing = null;
@@ -451,6 +605,7 @@ function audio() {
     noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    sfxReady = decodeEmbedded();
   }
   if (ac.state === "suspended") ac.resume();
   return ac;
@@ -472,6 +627,7 @@ function tick(pan) {
   const now = ac.currentTime;
   if (now - lastTickAt < 0.028) return;
   lastTickAt = now;
+  if (embeddedSfx.tick) return playBuffer(embeddedSfx.tick, now, pan);
   const src = ac.createBufferSource(); src.buffer = noiseBuf;
   const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2600; bp.Q.value = 1.5;
   const g = ac.createGain();
@@ -510,7 +666,8 @@ function playBuffer(clip, when, pan) {
 
 // Ring pickup: two quick bright square-wave notes, alternating left and right.
 function ring(when, pan) {
-  if (customRing) return playBuffer(customRing, when, pan);
+  const clip = customRing || embeddedSfx.ring;
+  if (clip) return playBuffer(clip, when, pan);
   [["E6", 0, 0.07], ["B6", 0.065, 0.32]].forEach(([n, off, len]) => {
     const t = when + off;
     const o = ac.createOscillator(); o.type = "square"; o.frequency.value = hz(n);
@@ -560,12 +717,70 @@ function drum(t, kind) {
   src.start(t, 0, kind === "c" ? 0.95 : 0.15);
 }
 function jingle(t0) {
-  if (customJingle) return playBuffer(customJingle, t0, 0);
+  const clip = customJingle || embeddedSfx.jingle;
+  if (clip) return playBuffer(clip, t0, 0);
   voice(LEAD, "square", 0.075, t0, true);
   voice(BASS, "triangle", 0.22, t0, false);
   for (let i = 0; i < 16; i += 2) { drum(t0 + i * STEP, "k"); drum(t0 + (i + 1) * STEP, "s"); }
   drum(t0 + 14.5 * STEP, "s");
   drum(t0 + 16 * STEP, "k"); drum(t0 + 16 * STEP, "c");
+}
+
+// Embedded files arrive as data: URIs; decode them once and level-match like uploaded clips.
+function dataUriToBuffer(uri) {
+  const bin = atob(uri.slice(uri.indexOf(",") + 1));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+async function decodeEmbedded() {
+  await Promise.all(Object.entries(EMBEDDED.sounds).map(async ([cue, uri]) => {
+    try {
+      const buf = await ac.decodeAudioData(dataUriToBuffer(uri));
+      embeddedSfx[cue] = { buf, gain: clipGain(buf, SFX_DB[cue] ?? -24) };
+    } catch (e) { console.warn(`embedded sound "${cue}" could not be decoded`, e); }
+  }));
+  document.documentElement.dataset.sfx = Object.keys(embeddedSfx).sort().join(" ");
+}
+
+function sweep(type, f0, f1, dur, vol, t, pan) {
+  const o = ac.createOscillator(); o.type = type;
+  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+  o.connect(g).connect(panner(pan)).connect(master);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+function noise(type, f0, f1, dur, vol, t, pan, swell) {
+  const s = ac.createBufferSource(); s.buffer = noiseBuf;
+  const f = ac.createBiquadFilter(); f.type = type; f.Q.value = type === "bandpass" ? 1.2 : 0.7;
+  f.frequency.setValueAtTime(f0, t);
+  if (f1 !== f0) f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = ac.createGain();
+  if (swell) { g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + dur * 0.45); g.gain.linearRampToValueAtTime(0.0001, t + dur); }
+  else { g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur); }
+  s.connect(f).connect(g).connect(panner(pan)).connect(master);
+  s.start(t, Math.random() * Math.max(0, 0.47 - dur), dur + 0.02);
+}
+// Original placeholder sounds for the cues that had none. Not level-measured yet (see README).
+const BUILTIN_SFX = {
+  start: (t, p) => { sweep("square", 260, 1040, 0.16, 0.09, t, p); sweep("square", 520, 1560, 0.16, 0.05, t + 0.09, p); },
+  type: (t, p) => sweep("square", 1500, 1300, 0.025, 0.03, t, p),
+  whoosh: (t, p) => noise("bandpass", 500, 3200, 0.32, 0.5, t, p, true),
+  land: (t, p) => { sweep("sine", 220, 70, 0.14, 0.35, t, p); noise("lowpass", 1200, 1200, 0.04, 0.4, t, p); },
+  ready: (t) => [["C6", 0, 0.08], ["E6", 0.08, 0.08], ["G6", 0.16, 0.08], ["C7", 0.24, 0.32]]
+    .forEach(([n, off, d]) => sweep("square", hz(n), hz(n) * 1.001, d, 0.07, t + off, 0)),
+  press: (t, p) => sweep("square", 220, 880, 0.14, 0.08, t, p),
+  reelStop: (t, p) => { noise("lowpass", 700, 700, 0.07, 0.9, t, p); sweep("triangle", 160, 90, 0.1, 0.25, t, p); },
+};
+// Play one cue: an embedded file if there is one, otherwise the built-in sound.
+function sfx(cue, pan = 0) {
+  if (!ac || muted) return;
+  const t = ac.currentTime + 0.005;
+  if (embeddedSfx[cue]) return playBuffer(embeddedSfx[cue], t, pan);
+  if (BUILTIN_SFX[cue]) BUILTIN_SFX[cue](t, pan);
 }
 
 /* ================= Reels ================= */
@@ -618,7 +833,7 @@ function makeReel(el, flipEl, blurDev, blurId, source, pan) {
       reel.prevOff = reel.offset;
       reel.render(speed);
       reel.decayFlip(dt);
-      if (t >= 1) { reel.offset = a.from + a.dist; reel.anim = null; reel.render(0); return true; }
+      if (t >= 1) { reel.offset = a.from + a.dist; reel.anim = null; reel.render(0); sfx("reelStop", pan); return true; }
       return false;
     },
     settled() { return !reel.anim && Math.abs(reel.flip) < 0.05; },
@@ -812,6 +1027,7 @@ const shareBtn = document.getElementById("shareBtn");
 const canShare = typeof navigator.share === "function";
 if (!window.matchMedia("(hover: none)").matches) document.getElementById("rvHint").textContent = "click the species for a photo + Wikipedia";
 
+let stage = "start"; // start | intro | main: which screen is showing
 let phase = "idle"; // idle | spinning | holding | revealed
 let spinStart = 0, score = 0, ringTotal = 0;
 let result = null;
@@ -963,6 +1179,7 @@ go.addEventListener("click", () => {
   spin();
 });
 document.addEventListener("keydown", (e) => {
+  if (stage !== "main") return;
   if (e.key === " " && e.target === document.body && !clipsDialog.open) { e.preventDefault(); go.click(); }
   else if (e.key === "Escape" && phase === "revealed" && !clipsDialog.open) { clearReveal(); phase = "idle"; }
 });
@@ -1028,6 +1245,258 @@ function loadClip(input, label, assign) {
 }
 loadClip(jingleInput, "Jingle", (b) => { customJingle = b; });
 loadClip(ringInput, "Ring sound", (b) => { customRing = b; });
+
+/* ================= Start screen and intro ================= */
+// Placeholder fan art: original goofy critters drawn here, not Sega characters. Real pieces go in
+// assets/fanart/ (with the artist's permission) and replace these entirely; see README.
+const DOODLES = [
+  { bg: "#FFF3C4", body: "#3C7CF0", belly: "#FFD9A8", shoe: "#E3262B", caption: "my OC Brenda DONT STEAL!!",
+    extra: '<path d="M30 20l4 8 8 1-6 6 2 8-8-4-7 4 2-8-6-6 8-1z" fill="#FFD21F" stroke="#111" stroke-width="2"/>' },
+  { bg: "#E6F7E1", body: "#7B3FD0", belly: "#F2D6FF", shoe: "#FFD21F", caption: "ULTRA DARK Todd (edgy)",
+    extra: '<rect x="50" y="38" width="30" height="9" rx="3" fill="#111"/><path d="M50 42h-6" stroke="#111" stroke-width="3"/>' },
+  { bg: "#FFE4EC", body: "#FF8A1F", belly: "#FFF0D0", shoe: "#1F5FD6", caption: "Gary the Snail but FAST",
+    extra: '<circle cx="34" cy="40" r="13" fill="#C88A00" stroke="#111" stroke-width="2.5"/><path d="M34 40m-6 0a6 6 0 1 0 12 0a3 3 0 1 0-6 0" fill="none" stroke="#111" stroke-width="2"/>' },
+  { bg: "#E2F0FF", body: "#2EB872", belly: "#DFFFE9", shoe: "#FF4A4F", caption: "Kevin the Shrimp + chili dog",
+    extra: '<rect x="70" y="62" width="24" height="10" rx="5" fill="#E8B060" stroke="#111" stroke-width="2"/><path d="M73 65h18" stroke="#B5361B" stroke-width="4" stroke-linecap="round"/>' },
+  { bg: "#F4EAFF", body: "#E3262B", belly: "#FFE3D0", shoe: "#111111", caption: "Nevaeh the Bobbit Worm <3",
+    extra: '<path d="M48 22l6-10 6 10 6-10 6 10v6H48z" fill="#FFD21F" stroke="#111" stroke-width="2"/>' },
+  { bg: "#FFF8E0", body: "#F2B705", belly: "#FFFFFF", shoe: "#2E9E43", caption: "Rhonda (shes faster than u)",
+    extra: '<path d="M84 30l4-6M88 40l7-2M84 50l5 4" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>' },
+];
+function doodleSvg(d, i) {
+  const look = [[3, -2], [-2, 2], [2, 3], [-3, -1], [1, -3], [-2, -2]][i % 6];
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="${d.bg}"/>
+    <path d="M4 42h16M2 54h20M6 66h14" stroke="#8FA3C8" stroke-width="3" stroke-linecap="round"/>
+    <path d="M50 30L16 20 40 42 8 46 40 56 16 72 52 64z" fill="${d.body}" stroke="#111" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M44 72l-4 10M66 72l4 10" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="57" cy="50" rx="25" ry="23" fill="${d.body}" stroke="#111" stroke-width="2.5"/>
+    <ellipse cx="68" cy="60" rx="13" ry="9" fill="${d.belly}" stroke="#111" stroke-width="2"/>
+    <path d="M62 64q6 5 12 0" fill="none" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="58" cy="42" r="8" fill="#fff" stroke="#111" stroke-width="2"/><circle cx="72" cy="43" r="6.5" fill="#fff" stroke="#111" stroke-width="2"/>
+    <circle cx="${58 + look[0]}" cy="${42 + look[1]}" r="3.4" fill="#111"/><circle cx="${72 - look[1]}" cy="${43 + look[0]}" r="2.8" fill="#111"/>
+    <ellipse cx="38" cy="85" rx="14" ry="6.5" fill="${d.shoe}" stroke="#111" stroke-width="2.5"/>
+    <ellipse cx="72" cy="86" rx="14" ry="6.5" fill="${d.shoe}" stroke="#111" stroke-width="2.5"/>
+    <path d="M30 83h12M64 84h12" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    ${d.extra}</svg>`;
+}
+// Up to six pieces, picked at random when there are more.
+function fanArtPieces() {
+  if (EMBEDDED.fanart.length) {
+    const all = EMBEDDED.fanart.slice();
+    for (let i = all.length - 1; i > 0; i--) { const j = rand(i + 1); [all[i], all[j]] = [all[j], all[i]]; }
+    return all.slice(0, 6);
+  }
+  return DOODLES.map((d, i) => ({ svg: doodleSvg(d, i), caption: d.caption }));
+}
+
+const startEl = document.getElementById("start");
+const startForm = document.getElementById("startForm");
+const nameInput = document.getElementById("nameInput");
+const startErr = document.getElementById("startErr");
+const introEl = document.getElementById("intro");
+const introCards = document.getElementById("introCards");
+const introCenter = document.getElementById("introCenter");
+const introText = document.getElementById("introText");
+const introSr = document.getElementById("introSr");
+const createBtn = document.getElementById("createBtn");
+
+const CHAR_MS = 36, LINE_PAUSE_MS = 380;            // greeting typing speed
+const CARD_FIRST_MS = 250, CARD_GAP_MS = 420, CARD_FLIGHT_MS = 750; // fan-art card launches
+let introTimers = [], introAnims = [], introDone = false, cardEls = [];
+const later = (ms, fn) => introTimers.push(setTimeout(fn, ms));
+
+function setStage(s) { stage = s; document.body.dataset.stage = s; }
+
+// Pick up to n non-overlapping card spots that keep clear of the greeting, the HUD and the ground.
+// Cards shrink until they all fit; on a very small screen fewer cards appear.
+function cardSpots(n) {
+  const W = innerWidth, H = innerHeight;
+  const c = introCenter.getBoundingClientRect();
+  const hud = document.querySelector(".hud").getBoundingClientRect();
+  const pad = 12, top = hud.bottom + 8, bottom = H - 56 - 8;
+  const keep = { l: c.left - pad, t: c.top - pad, r: c.right + pad, b: c.bottom + pad };
+  const hit = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
+  for (let w = Math.min(210, Math.max(84, Math.min(W, H) * 0.26)); w >= 56; w *= 0.88) {
+    const h = Math.round(w * 1.2), step = Math.max(10, w / 5), cands = [];
+    for (let y = top; y + h <= bottom; y += step)
+      for (let x = 8; x + w <= W - 8; x += step) {
+        const r = { l: x, t: y, r: x + w, b: y + h };
+        if (!hit(r, keep)) cands.push(r);
+      }
+    let chosen = [];
+    for (let attempt = 0; attempt < 12 && chosen.length < n; attempt++) { // greedy picks are random; retry a few
+    const tryPick = [];
+    while (tryPick.length < n) {
+      let best = null, bestScore = -1;
+      for (const r of cands) {
+        const grown = { l: r.l - pad, t: r.t - pad, r: r.r + pad, b: r.b + pad };
+        if (tryPick.some((q) => hit(grown, q))) continue;
+        const cx = (r.l + r.r) / 2, cy = (r.t + r.b) / 2;
+        const d = tryPick.length ? Math.min(...tryPick.map((q) => Math.hypot(cx - (q.l + q.r) / 2, cy - (q.t + q.b) / 2))) : 1e6;
+        const score = d + Math.random() * w * 0.4;
+        if (score > bestScore) { bestScore = score; best = r; }
+      }
+      if (!best) break;
+      tryPick.push(best);
+    }
+    if (tryPick.length > chosen.length) chosen = tryPick;
+    }
+    if (chosen.length === n || w * 0.88 < 56) return { w, h, spots: chosen };
+  }
+  return { w: 56, h: 67, spots: [] };
+}
+
+function buildCards() {
+  introCards.textContent = "";
+  cardEls = fanArtPieces().map((piece) => {
+    const fig = document.createElement("figure");
+    fig.className = "fan-card";
+    if (piece.svg) fig.innerHTML = piece.svg; // our own static markup
+    else { const img = document.createElement("img"); img.src = piece.src; img.alt = ""; fig.appendChild(img); }
+    if (piece.caption || piece.credit) {
+      const cap = document.createElement("figcaption");
+      cap.textContent = piece.caption || "";
+      if (piece.credit) { const cr = document.createElement("span"); cr.className = "credit"; cr.textContent = piece.credit; cap.appendChild(cr); }
+      fig.appendChild(cap);
+    }
+    fig.dataset.tilt = (Math.random() * 14 - 7).toFixed(1);
+    introCards.appendChild(fig);
+    return fig;
+  });
+}
+
+// Size and park every card at its spot. Cards that do not fit are hidden.
+function layoutCards() {
+  const { w, h, spots } = cardSpots(cardEls.length);
+  cardEls.forEach((el, i) => {
+    const r = spots[i];
+    el.hidden = !r;
+    if (!r) return;
+    el.style.width = w + "px"; el.style.height = h + "px";
+    el.classList.toggle("tiny", w < 90); // too small for a readable caption
+    el.style.transform = `translate(${r.l}px, ${r.t}px) rotate(${el.dataset.tilt}deg)`;
+  });
+  return { w, h, spots };
+}
+
+function typeGreeting(name) {
+  const parts = [
+    { text: "Hey " }, { text: name, cls: "nm" }, { text: ", let's see your best Sonic fan art!" },
+    { text: "Are you ready to meet your character?", line2: true },
+  ];
+  introText.textContent = "";
+  let l2 = null;
+  const slots = parts.map((p) => {
+    const wrap = document.createElement("span");
+    if (p.cls) wrap.className = p.cls;
+    const shown = document.createElement("span"), pend = document.createElement("span");
+    pend.className = "pend"; pend.textContent = p.text;
+    wrap.append(shown, pend);
+    if (p.line2) { l2 = l2 || introText.appendChild(Object.assign(document.createElement("span"), { className: "l2" })); l2.appendChild(wrap); }
+    else introText.appendChild(wrap);
+    return { shown, pend, line2: p.line2 };
+  });
+  introSr.textContent = parts.slice(0, 3).map((p) => p.text).join("") + " " + parts[3].text;
+  let t = 0, n = 0;
+  slots.forEach((sl, i) => {
+    if (sl.line2 && !slots[i - 1].line2) t += LINE_PAUSE_MS;
+    for (let k = 0; k < sl.pend.textContent.length; k++) {
+      t += CHAR_MS;
+      later(t, () => {
+        const ch = sl.pend.textContent[0];
+        sl.pend.textContent = sl.pend.textContent.slice(1);
+        sl.shown.textContent += ch;
+        if (ch !== " " && n++ % 2 === 0) sfx("type");
+      });
+    }
+  });
+  return { slots, end: t };
+}
+
+function runIntro(name) {
+  setStage("intro");
+  startEl.hidden = true;
+  introEl.hidden = false;
+  introDone = false;
+  createBtn.classList.remove("show");
+  const greeting = typeGreeting(name);
+  buildCards();
+  const { w, h, spots } = layoutCards();
+  const W = innerWidth, H = innerHeight;
+  let lastLand = 0;
+  cardEls.forEach((el, i) => {
+    const r = spots[i];
+    if (!r) return;
+    const delay = CARD_FIRST_MS + i * CARD_GAP_MS;
+    const from = `translate(${W / 2 - w / 2}px, ${H / 2 - h / 2}px)`;
+    const keyframes = reduceMotion
+      ? [{ opacity: 0 }, { opacity: 1 }]
+      : [
+          { transform: `${from} rotate(${+el.dataset.tilt - 720}deg) scale(0.08)`, opacity: 0 },
+          { opacity: 1, offset: 0.15 },
+          { transform: el.style.transform },
+        ];
+    introAnims.push(el.animate(keyframes, {
+      duration: reduceMotion ? 300 : CARD_FLIGHT_MS, delay, fill: "backwards",
+      easing: "cubic-bezier(.15, .75, .3, 1.08)",
+    }));
+    const pan = Math.max(-0.7, Math.min(0.7, ((r.l + w / 2) / W) * 2 - 1));
+    later(delay, () => sfx("whoosh", pan));
+    later(delay + CARD_FLIGHT_MS * 0.9, () => sfx("land", pan));
+    lastLand = delay + CARD_FLIGHT_MS;
+  });
+  later(Math.max(greeting.end, lastLand) + 200, finishIntro);
+  introEl._slots = greeting.slots;
+}
+
+// Ends the intro, early if the viewer presses Enter, Space or taps.
+function finishIntro() {
+  if (introDone) return;
+  introDone = true;
+  introTimers.forEach(clearTimeout); introTimers = [];
+  introAnims.forEach((a) => a.finish()); introAnims = [];
+  (introEl._slots || []).forEach((sl) => { sl.shown.textContent += sl.pend.textContent; sl.pend.textContent = ""; });
+  createBtn.classList.add("show");
+  sfx("ready");
+  createBtn.focus({ preventScroll: true });
+}
+
+startForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (stage !== "start") return;
+  const name = nameInput.value.replace(/\s+/g, " ").trim().slice(0, 20);
+  if (!name) {
+    startErr.textContent = "Type your name first!";
+    const card = startForm;
+    card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake");
+    nameInput.focus();
+    return;
+  }
+  startErr.textContent = "";
+  audio();
+  sfxReady.then(() => sfx("start"));
+  runIntro(name);
+});
+document.addEventListener("keydown", (e) => {
+  if (stage === "intro" && !introDone && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); finishIntro(); }
+});
+introEl.addEventListener("click", (e) => { if (!introDone && e.target !== createBtn) finishIntro(); });
+createBtn.addEventListener("click", () => {
+  if (stage !== "intro" || !introDone) return;
+  sfx("press");
+  setStage("main");
+  introEl.classList.add("leaving");
+  setTimeout(() => { introEl.hidden = true; introEl.classList.remove("leaving"); introCards.textContent = ""; cardEls = []; }, 350);
+  spin();
+});
+let introResizeTimer = 0;
+window.addEventListener("resize", () => {
+  if (stage !== "intro") return;
+  clearTimeout(introResizeTimer);
+  introResizeTimer = setTimeout(() => { introAnims.forEach((a) => a.finish()); introAnims = []; layoutCards(); }, 150);
+});
+if (window.matchMedia("(hover: hover)").matches) nameInput.focus({ preventScroll: true });
 
 /* ================= Boot ================= */
 reelName.setIdle(); reelAnimal.setIdle();
