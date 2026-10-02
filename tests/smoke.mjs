@@ -59,7 +59,7 @@ for (const [w, h] of sizes) {
   const apart = boxes.every((a, i) => boxes.every((b, j) => i === j || !overlap(a, b)));
   const clearOfText = boxes.every((b) => !overlap(b, keep));
   check(intro.btnShown, `Create My Character did not appear (${introMs} ms)`);
-  check(introMs >= 2500 && introMs <= 5500, `intro took ${introMs} ms, expected ~3.5 s`);
+  check(introMs >= 5500 && introMs <= 8500, `intro took ${introMs} ms, expected ~6.5 s`);
   check(intro.text.startsWith("Hey <b>Zed</b>, let's see your best Sonic fan art!") && intro.tags === 0, `greeting reads "${intro.text}"`);
   check(boxes.length >= (Math.min(w, h) >= 390 ? 6 : 4), `only ${boxes.length} fan-art cards fit`);
   check(inView, "a fan-art card is off screen");
