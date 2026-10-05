@@ -107,6 +107,7 @@ for (const [w, h] of sizes) {
 async function enterMachine(p, name = "Pat") {
   await p.fill("#nameInput", name);
   await p.press("#nameInput", "Enter");
+  await p.waitForSelector("body[data-stage=intro]", { timeout: 2000 });
   await p.waitForTimeout(150);
   await p.keyboard.press("Enter");
   await p.waitForSelector("#createBtn.show", { timeout: 1500 });
@@ -165,6 +166,37 @@ async function enterMachine(p, name = "Pat") {
   check(/Ring sound: using "beep\.wav"/.test(status), `clip status reads "${status}"`);
   check((await p.textContent("#clipsOpen")).includes("1 in use"), "clip button does not show 1 in use");
   await p.close();
+}
+
+// Phone keyboard: the viewport is short while the name is typed and grows back right after Enter.
+// The cards must still fly in one by one and land on the full-height screen.
+{
+  const mctx = await browser.newContext({ viewport: { width: 390, height: 420 }, isMobile: true, hasTouch: true });
+  const p = await mctx.newPage();
+  const errors = [];
+  p.on("pageerror", (e) => errors.push(e.message));
+  await p.goto(page_url);
+  check(await p.evaluate(() => matchMedia("(hover: none)").matches), "mobile emulation does not report hover: none");
+  await p.fill("#nameInput", "Sam");
+  const t0 = Date.now();
+  await p.press("#nameInput", "Enter");
+  await p.waitForTimeout(250);                     // the keyboard takes a moment to close...
+  await p.setViewportSize({ width: 390, height: 780 }); // ...then the viewport grows back
+  await p.waitForTimeout(1800);
+  const mid = await p.evaluate(() => ({
+    stage: document.body.dataset.stage,
+    flying: [...document.querySelectorAll(".fan-card")].filter((el) => el._anim && el._anim.playState !== "finished").length,
+    btn: document.getElementById("createBtn").classList.contains("show"),
+  }));
+  console.log(`phone keyboard: ${mid.flying} card(s) still to land 1.8 s in, stage ${mid.stage}`);
+  check(mid.stage === "intro" && mid.flying >= 3 && !mid.btn, "the keyboard closing cut the card flights short");
+  await p.waitForSelector("#createBtn.show", { timeout: 9000 }).catch(() => {});
+  const ms = Date.now() - t0;
+  const boxes = await cardBoxes(p);
+  check(ms >= 5500 && ms <= 9000, `intro with keyboard took ${ms} ms`);
+  check(boxes.length === 6 && boxes.every((b) => b.b <= 780 && b.t >= 0), `cards were not laid out for the full screen (${boxes.length} cards)`);
+  check(errors.length === 0, `page errors: ${errors.join("; ")}`);
+  await mctx.close();
 }
 
 // Embedded assets: run the embed tool on a scratch copy and check the page uses them.

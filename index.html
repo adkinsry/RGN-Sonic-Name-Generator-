@@ -1415,34 +1415,38 @@ function typeGreeting(name) {
   return { slots, end: t };
 }
 
+// From a tiny spinning card at the centre of the screen to its parked spot.
+function cardKeyframes(el, w, h) {
+  if (reduceMotion) return [{ opacity: 0 }, { opacity: 1 }];
+  const from = `translate(${innerWidth / 2 - w / 2}px, ${innerHeight / 2 - h / 2}px)`;
+  return [
+    { transform: `${from} rotate(${+el.dataset.tilt - 540}deg) scale(0.12)`, opacity: 0 },
+    { opacity: 1, offset: 0.1 },
+    { transform: el.style.transform },
+  ];
+}
+
+let laidOutAt = { w: 0, h: 0 }; // viewport size the card spots were chosen for
+
 function runIntro(name) {
   setStage("intro");
-  startEl.hidden = true;
-  introEl.hidden = false;
   introDone = false;
   createBtn.classList.remove("show");
   const greeting = typeGreeting(name);
   buildCards();
   const { w, h, spots } = layoutCards();
-  const W = innerWidth, H = innerHeight;
+  laidOutAt = { w: innerWidth, h: innerHeight };
   let lastLand = 0;
   cardEls.forEach((el, i) => {
     const r = spots[i];
     if (!r) return;
     const delay = CARD_FIRST_MS + i * CARD_GAP_MS;
-    const from = `translate(${W / 2 - w / 2}px, ${H / 2 - h / 2}px)`;
-    const keyframes = reduceMotion
-      ? [{ opacity: 0 }, { opacity: 1 }]
-      : [
-          { transform: `${from} rotate(${+el.dataset.tilt - 540}deg) scale(0.12)`, opacity: 0 },
-          { opacity: 1, offset: 0.1 },
-          { transform: el.style.transform },
-        ];
-    introAnims.push(el.animate(keyframes, {
+    el._anim = el.animate(cardKeyframes(el, w, h), {
       duration: reduceMotion ? 300 : CARD_FLIGHT_MS, delay, fill: "backwards",
       easing: "cubic-bezier(.3, .6, .35, 1.06)",
-    }));
-    const pan = Math.max(-0.7, Math.min(0.7, ((r.l + w / 2) / W) * 2 - 1));
+    });
+    introAnims.push(el._anim);
+    const pan = Math.max(-0.7, Math.min(0.7, ((r.l + w / 2) / innerWidth) * 2 - 1));
     later(delay, () => sfx("whoosh", pan));
     later(delay + CARD_FLIGHT_MS * 0.9, () => sfx("land", pan));
     lastLand = delay + CARD_FLIGHT_MS;
@@ -1477,8 +1481,22 @@ startForm.addEventListener("submit", (e) => {
   startErr.textContent = "";
   audio();
   sfxReady.then(() => sfx("start"));
-  runIntro(name);
+  startEl.hidden = true;
+  introEl.hidden = false;
+  // On a phone the keyboard is still open here. Closing it resizes the viewport a moment later,
+  // so the cards are laid out only once that has settled; otherwise they would get spots on the
+  // keyboard-shortened screen and every resize used to end their flight early.
+  nameInput.blur();
+  afterViewportSettles(() => runIntro(name));
 });
+function afterViewportSettles(fn) {
+  const touch = window.matchMedia("(hover: none)").matches; // a soft keyboard may be closing
+  let timer = 0, done = false;
+  const finish = () => { if (done) return; done = true; clearTimeout(timer); removeEventListener("resize", bump); fn(); };
+  const bump = () => { clearTimeout(timer); timer = setTimeout(finish, 150); };
+  addEventListener("resize", bump);
+  timer = setTimeout(finish, touch ? 500 : 0);
+}
 document.addEventListener("keydown", (e) => {
   if (stage === "intro" && !introDone && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); finishIntro(); }
 });
@@ -1491,11 +1509,22 @@ createBtn.addEventListener("click", () => {
   setTimeout(() => { introEl.hidden = true; introEl.classList.remove("leaving"); introCards.textContent = ""; cardEls = []; }, 350);
   spin();
 });
+// A real resize mid-intro re-targets the cards: landed ones move, flying ones steer to new spots.
 let introResizeTimer = 0;
 window.addEventListener("resize", () => {
-  if (stage !== "intro") return;
+  if (stage !== "intro" || !cardEls.length) return;
   clearTimeout(introResizeTimer);
-  introResizeTimer = setTimeout(() => { introAnims.forEach((a) => a.finish()); introAnims = []; layoutCards(); }, 150);
+  introResizeTimer = setTimeout(() => {
+    if (innerWidth === laidOutAt.w && innerHeight === laidOutAt.h) return;
+    laidOutAt = { w: innerWidth, h: innerHeight };
+    const { w, h } = layoutCards();
+    cardEls.forEach((el) => {
+      const a = el._anim;
+      if (!a || a.playState === "finished" || el.hidden) return;
+      if (typeof a.effect.setKeyframes === "function") a.effect.setKeyframes(cardKeyframes(el, w, h));
+      else a.finish();
+    });
+  }, 150);
 });
 if (window.matchMedia("(hover: hover)").matches) nameInput.focus({ preventScroll: true });
 
