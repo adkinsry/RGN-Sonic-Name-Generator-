@@ -67,7 +67,7 @@ Put a file named after its cue in `assets/sounds/` (MP3, WAV, OGG or M4A), for e
 | `ring` | the ring burst on the reveal (7 times) | −26 dBFS |
 | `jingle` | the act-clear fanfare on the reveal | −18 dBFS |
 
-Short, dry clips work best for `type`, `tick` and `reelStop`; they play many times in a row. The `ring` cue normally fires seven times for a burst; a ring clip longer than 0.4 s plays once instead. A clip chosen in the dialog below still overrides an embedded jingle or ring for that visit.
+To turn a cue off entirely, add an empty file named `<cue>.silent` (for example `assets/sounds/whoosh.silent`) and run `npm run embed-assets`. Short, dry clips work best for `type`, `tick` and `reelStop`; they play many times in a row. The `ring` cue normally fires seven times for a burst; a ring clip longer than 0.4 s plays once instead. A clip chosen in the dialog below still overrides an embedded jingle or ring for that visit.
 
 **Use your own sound clips** lets you pick a jingle and a ring sound from your device. Clips are decoded in memory, never uploaded, and forgotten when the page closes. They are level-matched to the built-in sounds when loaded, and the picker shows the adjustment it applied.
 

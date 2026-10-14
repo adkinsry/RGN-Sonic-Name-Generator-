@@ -735,12 +735,14 @@ function dataUriToBuffer(uri) {
 }
 async function decodeEmbedded() {
   await Promise.all(Object.entries(EMBEDDED.sounds).map(async ([cue, uri]) => {
+    if (uri === null) return; // silenced cue
     try {
       const buf = await ac.decodeAudioData(dataUriToBuffer(uri));
       embeddedSfx[cue] = { buf, gain: clipGain(buf, SFX_DB[cue] ?? -24) };
     } catch (e) { console.warn(`embedded sound "${cue}" could not be decoded`, e); }
   }));
   document.documentElement.dataset.sfx = Object.keys(embeddedSfx).sort().join(" ");
+  document.documentElement.dataset.sfxSilent = Object.keys(EMBEDDED.sounds).filter((c) => EMBEDDED.sounds[c] === null).sort().join(" ");
 }
 
 function sweep(type, f0, f1, dur, vol, t, pan) {
@@ -777,7 +779,7 @@ const BUILTIN_SFX = {
 };
 // Play one cue: an embedded file if there is one, otherwise the built-in sound.
 function sfx(cue, pan = 0) {
-  if (!ac || muted) return;
+  if (!ac || muted || EMBEDDED.sounds[cue] === null) return;
   const t = ac.currentTime + 0.005;
   if (embeddedSfx[cue]) return playBuffer(embeddedSfx[cue], t, pan);
   if (BUILTIN_SFX[cue]) BUILTIN_SFX[cue](t, pan);

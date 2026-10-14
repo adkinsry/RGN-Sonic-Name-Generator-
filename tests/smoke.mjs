@@ -208,6 +208,7 @@ async function enterMachine(p, name = "Pat") {
     mkdirSync(join(dir, "assets/fanart"), { recursive: true });
     writeFileSync(join(dir, "assets/sounds/start.wav"), beepWav());
     writeFileSync(join(dir, "assets/sounds/whoosh.wav"), beepWav());
+    writeFileSync(join(dir, "assets/sounds/land.silent"), "");
     const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
     for (const f of ["a.png", "b.png", "c.png"]) writeFileSync(join(dir, "assets/fanart", f), png);
     writeFileSync(join(dir, "assets/fanart/credits.json"), JSON.stringify({ "a.png": { caption: "Spiky </script> Steve */", credit: "art by @tester" } }));
@@ -223,12 +224,14 @@ async function enterMachine(p, name = "Pat") {
     await p.waitForFunction(() => document.documentElement.dataset.sfx !== undefined, null, { timeout: 5000 }).catch(() => {});
     const got = await p.evaluate(() => ({
       sfx: document.documentElement.dataset.sfx,
+      silent: document.documentElement.dataset.sfxSilent,
       imgs: document.querySelectorAll(".fan-card img").length,
       svgs: document.querySelectorAll(".fan-card svg").length,
       caps: [...document.querySelectorAll(".fan-card figcaption")].map((f) => f.textContent),
     }));
     console.log(`embedded: sounds [${got.sfx}], ${got.imgs} image card(s), captions ${JSON.stringify(got.caps)}`);
     check(got.sfx === "start whoosh", `embedded sounds decoded: "${got.sfx}"`);
+    check(got.silent === "land", `silenced cues: "${got.silent}", expected "land"`);
     check(got.imgs === 3 && got.svgs === 0, `expected 3 embedded fan-art cards and no placeholders, got ${got.imgs} + ${got.svgs}`);
     check(got.caps.includes("Spiky </script> Steve */art by @tester"), "caption/credit with markup did not survive embedding");
     check(errors.length === 0, `page errors with embedded assets: ${errors.join("; ")}`);
