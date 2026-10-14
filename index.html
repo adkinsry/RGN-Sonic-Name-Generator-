@@ -224,6 +224,9 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
   box-shadow: 0 6px 0 var(--gold-dark), 0 14px 30px rgba(6, 18, 58, .45);
 }
 .start-card.shake { animation: shake .35s; }
+.start-card.in { animation: pop .5s cubic-bezier(.2, 1.6, .4, 1) both; }
+.press-start { font-size: clamp(26px, 7vw, 36px); padding: 16px 44px; animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { filter: brightness(1.15); box-shadow: 0 6px 0 #8E0E12, 0 0 30px rgba(255, 210, 31, .85); } }
 .start-title {
   margin: 0; font: 400 clamp(26px, 7vw, 40px)/1.05 var(--display); color: var(--gold);
   -webkit-text-stroke: 2px var(--navy-deep); paint-order: stroke fill;
@@ -244,8 +247,8 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
   position: absolute; inset: 0; pointer-events: none; opacity: 0;
   background-size: cover; background-position: center 20%;
 }
-.hero-bg.show { animation: bgflash 1.6s ease-out both; }
-@keyframes bgflash { 0% { opacity: 0; } 12% { opacity: .6; } 100% { opacity: .22; } }
+.hero-bg.show { animation: bgflash 2.4s ease-out both; }
+@keyframes bgflash { 0% { opacity: 0; } 10% { opacity: .85; } 100% { opacity: .22; } }
 .fan-card.hero { z-index: 3; } /* lands on top of the greeting */
 .fan-card.hero.away { animation: heroaway .45s ease-in both; pointer-events: none; }
 @keyframes heroaway { to { transform: translate(var(--hx), var(--hy)) scale(1.3); opacity: 0; } }
@@ -373,6 +376,8 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
   .rv-name, .rv-animal { animation: fadein .3s both; transform: skewX(-8deg); }
   .machine.live .bulbs i { animation: none; background: var(--gold); }
   .start-card.shake { animation: none; }
+  .start-card.in { animation: none; }
+  .press-start { animation: none; }
   .hero-bg.show { animation: none; opacity: .22; }
   .fan-card.hero.away { animation: none; visibility: hidden; }
 }
@@ -458,7 +463,8 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
 
 <section class="start" id="start">
   <div class="hero-bg" id="startBg" aria-hidden="true"></div>
-  <form class="start-card" id="startForm" novalidate>
+  <button class="go press-start" id="pressStart" type="button">Press Start</button>
+  <form class="start-card" id="startForm" novalidate hidden>
     <h1 class="start-title">Hedgehog OC Machine</h1>
     <label class="start-label" for="nameInput">ENTER YOUR NAME</label>
     <input class="start-input" id="nameInput" name="name" maxlength="20" autocomplete="given-name" enterkeyhint="go" spellcheck="false">
@@ -629,6 +635,7 @@ function playBuffer(clip, when, pan) {
   const g = ac.createGain(); g.gain.value = clip.gain;
   s.connect(g).connect(panner(pan)).connect(master);
   s.start(when);
+  return s;
 }
 
 // Ring pickup: two quick bright square-wave notes, alternating left and right.
@@ -1448,7 +1455,7 @@ startForm.addEventListener("submit", (e) => {
   }
   startErr.textContent = "";
   audio();
-  sfxReady.then(() => sfx("start"));
+  sfxReady.then(playStartTheme); // no-op if the first tap already started it
   startEl.hidden = true;
   introEl.hidden = false;
   // On a phone the keyboard is still open here. Closing it resizes the viewport a moment later,
@@ -1494,8 +1501,31 @@ window.addEventListener("resize", () => {
     });
   }, 150);
 });
-if (HERO) { startBg.style.backgroundImage = `url("${HERO.src}")`; startBg.classList.add("show"); }
-if (window.matchMedia("(hover: hover)").matches) nameInput.focus({ preventScroll: true });
+// Press Start is the first user gesture, which is the earliest a phone will let audio play. It
+// flashes the hero piece across the screen, starts the opening theme and brings in the name card.
+function flashStart() {
+  if (!HERO) return;
+  startBg.style.backgroundImage = `url("${HERO.src}")`;
+  startBg.classList.remove("show"); void startBg.offsetWidth; startBg.classList.add("show");
+}
+let startTheme = null; // the playing "start" clip, so Enter does not restart it
+function playStartTheme() {
+  if (startTheme) return;
+  const src = sfx("start");
+  if (src) { startTheme = src; src.onended = () => { startTheme = null; }; }
+}
+const pressStart = document.getElementById("pressStart");
+pressStart.addEventListener("click", () => {
+  if (stage !== "start" || !startForm.hidden) return;
+  audio();
+  sfxReady.then(() => { if (stage === "start") playStartTheme(); });
+  flashStart();
+  pressStart.hidden = true;
+  startForm.hidden = false;
+  startForm.classList.add("in");
+  nameInput.focus({ preventScroll: true });
+});
+if (window.matchMedia("(hover: hover)").matches) pressStart.focus({ preventScroll: true });
 
 /* ================= Boot ================= */
 reelName.setIdle(); reelAnimal.setIdle();

@@ -12,7 +12,7 @@ The whole app is one self-contained file, `index.html` (~160 KB before you add y
 
 ## What it does
 
-1. **Start screen:** type your name and press Enter (or **Let's Go!**).
+1. **Start screen:** **Press Start**, then type your name and press Enter (or **Let's Go!**). Phones play no sound until something is tapped, so Press Start is where the opening sound and the first flash of the finale picture happen.
 2. **Intro:** "Hey (Name), let's see your best Sonic fan art! Are you ready to meet your character?" types itself out while up to six fan-art cards spin out of the centre one at a time, growing, and land in free spots around the text; the next one leaves as the last one lands. It takes about 6.5 s; Enter, Space or a tap skips to the end. On short landscape phones only four cards fit.
 3. **Create My Character** appears. Pressing it spins both reels for about 5 seconds, Price-is-Right style. The name reel stops at 4.3 s and the species reel at 5.0 s.
 4. After 1.5 s of stillness, the name slams in with a ring burst, a ring chime, an act-clear fanfare, and pixel critters that hop around for about 10 s and then leave. Once everything settles the page stops animating, so it doesn't drain a phone battery while it sits open.
@@ -27,7 +27,7 @@ The backdrop is an original drawing in the spirit of a 16-bit "green hill" stage
 The page ships with six placeholder cards: original goofy critters drawn in code, not Sega characters. To show real fan art instead:
 
 1. Put images in `assets/fanart/` (PNG, JPG, WebP or GIF; about 400 px wide keeps the page small). **Only use pieces you have the artist's permission to use.**
-2. Optionally add `assets/fanart/credits.json` with a caption and credit per file: `{ "kevin.png": { "caption": "Kevin the Shrimp", "credit": "art by @someone" } }`. Add `"hero": true` to one piece to make it the finale: it is always shown, always last, lands big in the centre of the screen and holds for 2 s, then flashes across the background as **Create My Character** appears. The same piece flashes behind the name card when the page opens.
+2. Optionally add `assets/fanart/credits.json` with a caption and credit per file: `{ "kevin.png": { "caption": "Kevin the Shrimp", "credit": "art by @someone" } }`. Add `"hero": true` to one piece to make it the finale: it is always shown, always last, lands big in the centre of the screen and holds for 2 s, then flashes across the background as **Create My Character** appears. The same piece flashes behind the name card when **Press Start** is pressed, which is also when the `start` sound begins.
 3. Run `npm run embed-assets`. This copies the files into `index.html`, so the page stays a single offline file.
 
 When any fan art is embedded, only those images are shown (six at random if there are more, the hero always among them) and the placeholders are not used.
@@ -56,7 +56,7 @@ Put a file named after its cue in `assets/sounds/` (MP3, WAV, OGG or M4A), for e
 
 | Cue | Plays when | Matched to |
 |---|---|---|
-| `start` | the name is entered | −22 dBFS |
+| `start` | Press Start is pressed (and on Enter, if it has already ended) | −22 dBFS |
 | `type` | every other letter of the greeting types out | −34 dBFS |
 | `whoosh` | each fan-art card launches | −28 dBFS |
 | `land` | each card lands | −28 dBFS |

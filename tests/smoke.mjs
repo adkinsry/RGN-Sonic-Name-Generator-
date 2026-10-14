@@ -33,7 +33,10 @@ for (const [w, h] of sizes) {
   await p.route("**/*", (r) => { if (r.request().url().startsWith("file:")) return r.continue(); net.push(r.request().url()); return r.abort(); });
   await p.goto(page_url);
 
-  // Start screen: an empty name is refused, and Space does not spin behind it.
+  // Press Start brings in the name card. Then an empty name is refused, and Space does not spin behind it.
+  check(await p.$eval("#startForm", (f) => f.hidden), "name card showed before Press Start");
+  await p.click("#pressStart");
+  await p.waitForSelector("#startForm:not([hidden])", { timeout: 2000 });
   await p.click("#startForm button[type=submit]");
   check(await p.isVisible("#start") && (await p.textContent("#startErr")).length > 0, "empty name was accepted");
   await p.evaluate(() => document.activeElement && document.activeElement.blur());
@@ -108,6 +111,7 @@ for (const [w, h] of sizes) {
 
 // Enter a name and skip the intro with a second Enter, then open the machine.
 async function enterMachine(p, name = "Pat") {
+  await p.click("#pressStart");
   await p.fill("#nameInput", name);
   await p.press("#nameInput", "Enter");
   await p.waitForSelector("body[data-stage=intro]", { timeout: 2000 });
@@ -170,6 +174,7 @@ async function enterMachine(p, name = "Pat") {
   p.on("pageerror", (e) => errors.push(e.message));
   await p.goto(page_url);
   check(await p.evaluate(() => matchMedia("(hover: none)").matches), "mobile emulation does not report hover: none");
+  await p.tap("#pressStart");
   await p.fill("#nameInput", "Sam");
   const t0 = Date.now();
   await p.press("#nameInput", "Enter");
@@ -214,7 +219,9 @@ async function enterMachine(p, name = "Pat") {
     const errors = [];
     p.on("pageerror", (e) => errors.push(e.message));
     await p.goto(pathToFileURL(join(dir, "index.html")).href);
-    const startFlash = await p.$eval("#startBg", (e) => e.classList.contains("show") && e.style.backgroundImage.startsWith("url("));
+    const flashBefore = await p.$eval("#startBg", (e) => e.classList.contains("show"));
+    await p.click("#pressStart");
+    const startFlash = !flashBefore && await p.waitForSelector("#startBg.show", { timeout: 3000 }).then(() => p.$eval("#startBg", (e) => e.style.backgroundImage.startsWith("url("))).catch(() => false);
     await p.fill("#nameInput", "Pat");
     const t0 = Date.now();
     await p.press("#nameInput", "Enter");
@@ -237,7 +244,7 @@ async function enterMachine(p, name = "Pat") {
       caps: [...document.querySelectorAll(".fan-card figcaption")].map((f) => f.textContent),
     }));
     console.log(`embedded: sounds [${got.sfx}], ${got.imgs} image card(s), captions ${JSON.stringify(got.caps)}; hero ${heroMid.w}px vs ${otherW}px, intro ${introMs} ms`);
-    check(startFlash, "hero did not flash behind the name card at the start");
+    check(startFlash, "hero did not flash behind the name card on Press Start (or flashed before it)");
     check(got.order[got.order.length - 1] === true && got.order.filter(Boolean).length === 1, "hero is not the single last card");
     check(heroMid.shown && !heroMid.away && heroMid.w > otherW * 1.3, `hero at 3.6 s: shown ${heroMid.shown}, away ${heroMid.away}, ${heroMid.w}px vs ${otherW}px`);
     check(Math.abs(got.heroBox.cx - 640) < 2 && Math.abs(got.heroBox.cy - 400) < 60, `hero not centred: ${JSON.stringify(got.heroBox)}`);
