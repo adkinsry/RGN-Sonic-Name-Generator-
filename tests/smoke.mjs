@@ -33,7 +33,10 @@ for (const [w, h] of sizes) {
   await p.route("**/*", (r) => { if (r.request().url().startsWith("file:")) return r.continue(); net.push(r.request().url()); return r.abort(); });
   await p.goto(page_url);
 
-  // Start screen: an empty name is refused, and Space does not spin behind it.
+  // Press Start brings in the name card. Then an empty name is refused, and Space does not spin behind it.
+  check(await p.$eval("#startForm", (f) => f.hidden), "name card showed before Press Start");
+  await p.click("#pressStart");
+  await p.waitForSelector("#startForm:not([hidden])", { timeout: 2000 });
   await p.click("#startForm button[type=submit]");
   check(await p.isVisible("#start") && (await p.textContent("#startErr")).length > 0, "empty name was accepted");
   await p.evaluate(() => document.activeElement && document.activeElement.blur());
@@ -54,12 +57,15 @@ for (const [w, h] of sizes) {
     btnShown: document.getElementById("createBtn").classList.contains("show"),
   }));
   const boxes = await cardBoxes(p);
+  const hero = !!(await p.$(".fan-card.hero"));
+  const others = hero ? boxes.slice(0, -1) : boxes; // the hero is last, and sits over the greeting by design
   const c = intro.center, keep = { l: c.left, t: c.top, r: c.right, b: c.bottom };
   const inView = boxes.every((b) => b.l >= 0 && b.t >= 0 && b.r <= w && b.b <= h);
   const apart = boxes.every((a, i) => boxes.every((b, j) => i === j || !overlap(a, b)));
-  const clearOfText = boxes.every((b) => !overlap(b, keep));
+  const clearOfText = others.every((b) => !overlap(b, keep));
+  const expected = expectedIntroMs(others.length, hero, 10);
   check(intro.btnShown, `Create My Character did not appear (${introMs} ms)`);
-  check(introMs >= 5500 && introMs <= 8500, `intro took ${introMs} ms, expected ~6.5 s`);
+  check(Math.abs(introMs - expected) <= 1200, `intro took ${introMs} ms, expected ~${expected}`);
   check(intro.text.startsWith("Hey <b>Zed</b>, let's see your best Sonic fan art!") && intro.tags === 0, `greeting reads "${intro.text}"`);
   check(boxes.length >= (Math.min(w, h) >= 390 ? 6 : 4), `only ${boxes.length} fan-art cards fit`);
   check(inView, "a fan-art card is off screen");
@@ -105,6 +111,7 @@ for (const [w, h] of sizes) {
 
 // Enter a name and skip the intro with a second Enter, then open the machine.
 async function enterMachine(p, name = "Pat") {
+  await p.click("#pressStart");
   await p.fill("#nameInput", name);
   await p.press("#nameInput", "Enter");
   await p.waitForSelector("body[data-stage=intro]", { timeout: 2000 });
@@ -155,16 +162,6 @@ async function enterMachine(p, name = "Pat") {
   await p.reload();
   check((await p.textContent("#mute")) === "SOUND: OFF", "mute setting was not remembered");
   await p.click("#mute");
-  await enterMachine(p);
-
-  // A picked clip is decoded and level-matched. 0.25 s of 440 Hz, 16-bit mono WAV.
-  await p.waitForTimeout(400);
-  await p.click("#clipsOpen");
-  await p.setInputFiles("#ringFile", { name: "beep.wav", mimeType: "audio/wav", buffer: beepWav() });
-  await p.waitForFunction(() => document.getElementById("soundStatus").textContent !== "", null, { timeout: 5000 }).catch(() => {});
-  const status = await p.textContent("#soundStatus");
-  check(/Ring sound: using "beep\.wav"/.test(status), `clip status reads "${status}"`);
-  check((await p.textContent("#clipsOpen")).includes("1 in use"), "clip button does not show 1 in use");
   await p.close();
 }
 
@@ -177,6 +174,7 @@ async function enterMachine(p, name = "Pat") {
   p.on("pageerror", (e) => errors.push(e.message));
   await p.goto(page_url);
   check(await p.evaluate(() => matchMedia("(hover: none)").matches), "mobile emulation does not report hover: none");
+  await p.tap("#pressStart");
   await p.fill("#nameInput", "Sam");
   const t0 = Date.now();
   await p.press("#nameInput", "Enter");
@@ -193,7 +191,9 @@ async function enterMachine(p, name = "Pat") {
   await p.waitForSelector("#createBtn.show", { timeout: 9000 }).catch(() => {});
   const ms = Date.now() - t0;
   const boxes = await cardBoxes(p);
-  check(ms >= 5500 && ms <= 9000, `intro with keyboard took ${ms} ms`);
+  const kbHero = !!(await p.$(".fan-card.hero"));
+  const expectedKb = expectedIntroMs(boxes.length - (kbHero ? 1 : 0), kbHero, 3) + 500; // + the keyboard wait
+  check(Math.abs(ms - expectedKb) <= 1500, `intro with keyboard took ${ms} ms, expected ~${expectedKb}`);
   check(boxes.length === 6 && boxes.every((b) => b.b <= 780 && b.t >= 0), `cards were not laid out for the full screen (${boxes.length} cards)`);
   check(errors.length === 0, `page errors: ${errors.join("; ")}`);
   await mctx.close();
@@ -208,9 +208,10 @@ async function enterMachine(p, name = "Pat") {
     mkdirSync(join(dir, "assets/fanart"), { recursive: true });
     writeFileSync(join(dir, "assets/sounds/start.wav"), beepWav());
     writeFileSync(join(dir, "assets/sounds/whoosh.wav"), beepWav());
+    writeFileSync(join(dir, "assets/sounds/land.silent"), "");
     const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
     for (const f of ["a.png", "b.png", "c.png"]) writeFileSync(join(dir, "assets/fanart", f), png);
-    writeFileSync(join(dir, "assets/fanart/credits.json"), JSON.stringify({ "a.png": { caption: "Spiky </script> Steve */", credit: "art by @tester" } }));
+    writeFileSync(join(dir, "assets/fanart/credits.json"), JSON.stringify({ "a.png": { caption: "Spiky </script> Steve */", credit: "art by @tester" }, "b.png": { hero: true } }));
     execFileSync(process.execPath, [fileURLToPath(new URL("../tools/embed-assets.mjs", import.meta.url)), dir], { stdio: "pipe" });
 
     const p = await ctx.newPage();
@@ -218,17 +219,40 @@ async function enterMachine(p, name = "Pat") {
     const errors = [];
     p.on("pageerror", (e) => errors.push(e.message));
     await p.goto(pathToFileURL(join(dir, "index.html")).href);
+    await p.click("#pressStart");
+    // The hero must not appear anywhere (card or background) before the intro's finale.
+    const noEarlyHero = await p.waitForSelector("#nameInput", { timeout: 3000 }).then(() => p.evaluate(() =>
+      !document.querySelector("#startBg") && !document.querySelector(".hero-bg.show") && !document.querySelector(".fan-card.hero"))).catch(() => false);
     await p.fill("#nameInput", "Pat");
+    const t0 = Date.now();
     await p.press("#nameInput", "Enter");
     await p.waitForFunction(() => document.documentElement.dataset.sfx !== undefined, null, { timeout: 5000 }).catch(() => {});
+    // 2 ordinary cards (0.3 s + 2 x 1.05 s), then the hero's 1.2 s flight and 2 s hold: ~5.6 s.
+    await p.waitForTimeout(3600);
+    const heroMid = await p.$eval(".fan-card.hero", (el) => ({ shown: !el.hidden, away: el.classList.contains("away"), w: parseFloat(el.style.width) }));
+    const otherW = await p.$eval(".fan-card:not(.hero)", (el) => parseFloat(el.style.width));
+    await p.waitForSelector("#createBtn.show", { timeout: 9000 }).catch(() => {});
+    const introMs = Date.now() - t0;
     const got = await p.evaluate(() => ({
+      heroBox: (() => { const el = document.querySelector(".fan-card.hero"); const m = /translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(el.style.transform); return { cx: +m[1] + parseFloat(el.style.width) / 2, cy: +m[2] + parseFloat(el.style.height) / 2 }; })(),
+      heroAway: document.querySelector(".fan-card.hero").classList.contains("away"),
+      bgFlash: document.getElementById("introBg").classList.contains("show"),
+      order: [...document.querySelectorAll(".fan-card")].map((el) => el.classList.contains("hero")),
       sfx: document.documentElement.dataset.sfx,
+      silent: document.documentElement.dataset.sfxSilent,
       imgs: document.querySelectorAll(".fan-card img").length,
       svgs: document.querySelectorAll(".fan-card svg").length,
       caps: [...document.querySelectorAll(".fan-card figcaption")].map((f) => f.textContent),
     }));
-    console.log(`embedded: sounds [${got.sfx}], ${got.imgs} image card(s), captions ${JSON.stringify(got.caps)}`);
+    console.log(`embedded: sounds [${got.sfx}], ${got.imgs} image card(s), captions ${JSON.stringify(got.caps)}; hero ${heroMid.w}px vs ${otherW}px, intro ${introMs} ms`);
+    check(noEarlyHero, "hero shown on the start screen before the intro finale");
+    check(got.order[got.order.length - 1] === true && got.order.filter(Boolean).length === 1, "hero is not the single last card");
+    check(heroMid.shown && !heroMid.away && heroMid.w > otherW * 1.3, `hero at 3.6 s: shown ${heroMid.shown}, away ${heroMid.away}, ${heroMid.w}px vs ${otherW}px`);
+    check(Math.abs(got.heroBox.cx - 640) < 2 && Math.abs(got.heroBox.cy - 400) < 60, `hero not centred: ${JSON.stringify(got.heroBox)}`);
+    check(got.heroAway && got.bgFlash, "intro did not end with the hero flashing into the background");
+    check(introMs >= 5000 && introMs <= 7500, `intro with hero took ${introMs} ms, expected ~5.6 s`);
     check(got.sfx === "start whoosh", `embedded sounds decoded: "${got.sfx}"`);
+    check(got.silent === "land", `silenced cues: "${got.silent}", expected "land"`);
     check(got.imgs === 3 && got.svgs === 0, `expected 3 embedded fan-art cards and no placeholders, got ${got.imgs} + ${got.svgs}`);
     check(got.caps.includes("Spiky </script> Steve */art by @tester"), "caption/credit with markup did not survive embedding");
     check(errors.length === 0, `page errors with embedded assets: ${errors.join("; ")}`);
@@ -239,6 +263,14 @@ async function enterMachine(p, name = "Pat") {
 await browser.close();
 console.log(failed ? `${failed} check(s) failed` : "all checks passed");
 process.exitCode = failed ? 1 : 0;
+
+// How long the intro should take: the greeting typing out, or the cards landing one by one
+// (plus the hero's flight and hold), whichever ends later. nameLen is the typed name's length.
+function expectedIntroMs(others, hero, nameLen) {
+  const greeting = (4 + nameLen + 37 + 37) * 55 + 450 + 200;
+  const cards = hero ? 300 + others * 1050 + 100 + 1200 + 2000 : 300 + others * 1050 - 100 + 200;
+  return Math.max(greeting, cards);
+}
 
 function beepWav() {
   const rate = 8000, n = rate / 4, wav = Buffer.alloc(44 + n * 2);

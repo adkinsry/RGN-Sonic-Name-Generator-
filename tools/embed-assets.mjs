@@ -1,8 +1,10 @@
 // Embeds the files in assets/ into index.html so the page stays one self-contained, offline file.
 //   npm run embed-assets          (or: node tools/embed-assets.mjs <other project folder>)
 // assets/sounds/<cue>.<mp3|wav|ogg|m4a>  replaces the built-in sound for that cue (names below).
+// assets/sounds/<cue>.silent (an empty file) turns that cue off entirely.
 // assets/fanart/*.<png|jpg|jpeg|webp|gif> are the intro's fan-art cards (up to 6 shown per visit).
-// assets/fanart/credits.json (optional): { "file.png": { "caption": "...", "credit": "art by @..." } }
+// assets/fanart/credits.json (optional): { "file.png": { "caption": "...", "credit": "art by @...", "hero": true } }
+// "hero": true marks the piece that always closes the intro, landing big in the centre (one at most).
 // Run it again after adding, renaming or deleting files; an empty folder removes those assets.
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import { extname, basename, join } from "node:path";
@@ -25,10 +27,10 @@ const dataUri = (file, type) => {
 const sounds = {};
 for (const f of list(join(root, "assets/sounds"))) {
   const ext = extname(f).toLowerCase(), cue = basename(f, extname(f));
-  if (!SOUND_TYPES[ext]) continue;
+  if (ext !== ".silent" && !SOUND_TYPES[ext]) continue;
   if (!CUES.includes(cue)) { console.warn(`  skipped ${f}: not a cue name (${CUES.join(", ")})`); continue; }
   if (sounds[cue]) { console.warn(`  skipped ${f}: ${cue} already has a file`); continue; }
-  sounds[cue] = dataUri(join(root, "assets/sounds", f), SOUND_TYPES[ext]);
+  sounds[cue] = ext === ".silent" ? null : dataUri(join(root, "assets/sounds", f), SOUND_TYPES[ext]);
 }
 
 const fanDir = join(root, "assets/fanart");
@@ -38,9 +40,10 @@ for (const f of list(fanDir)) {
   const type = IMAGE_TYPES[extname(f).toLowerCase()];
   if (!type) continue;
   const meta = credits[f] || {};
-  fanart.push({ src: dataUri(join(fanDir, f), type), caption: meta.caption || "", credit: meta.credit || "" });
+  fanart.push({ src: dataUri(join(fanDir, f), type), caption: meta.caption || "", credit: meta.credit || "", hero: !!meta.hero });
 }
 for (const f of Object.keys(credits)) if (!existsSync(join(fanDir, f))) console.warn(`  credits.json names ${f}, which is not in assets/fanart`);
+if (fanart.filter((p) => p.hero).length > 1) { console.warn("  more than one hero in credits.json; keeping the first"); fanart.forEach((p, i) => { if (p.hero && fanart.findIndex((q) => q.hero) !== i) p.hero = false; }); }
 
 // "<" and "*/" are escaped so no caption can close the script tag or the marker comment.
 const json = JSON.stringify({ sounds, fanart }).replace(/</g, "\\u003c").replace(/\*\//g, "*\\/");
@@ -48,4 +51,5 @@ const html = readFileSync(htmlPath, "utf8");
 const marker = /\/\*ASSETS\*\/[\s\S]*?\/\*\/ASSETS\*\//;
 if (!marker.test(html)) throw new Error("index.html is missing the /*ASSETS*/ ... /*/ASSETS*/ markers");
 writeFileSync(htmlPath, html.replace(marker, () => `/*ASSETS*/${json}/*/ASSETS*/`));
-console.log(`embedded ${Object.keys(sounds).length} sound(s) [${Object.keys(sounds).join(", ") || "none"}] and ${fanart.length} fan-art image(s); index.html is now ${Math.round(readFileSync(htmlPath).length / 1024)} KB`);
+const names = Object.keys(sounds).map((c) => (sounds[c] === null ? c + " (silent)" : c));
+console.log(`embedded ${names.length} sound(s) [${names.join(", ") || "none"}] and ${fanart.length} fan-art image(s); index.html is now ${Math.round(readFileSync(htmlPath).length / 1024)} KB`);
