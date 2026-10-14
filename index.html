@@ -1096,7 +1096,11 @@ function showReveal() {
   if (ac && !muted) {
     const t = ac.currentTime + 0.03;
     jingle(t + 0.12);
-    for (let i = 0; i < 7; i++) ring(t + i * 0.085, i % 2 ? 0.6 : -0.6);
+    // The built-in chime is a blip, so it fires seven times for a burst. A longer clip (an
+    // embedded or uploaded "rings scatter" sound, say) is a whole burst in itself: play it once.
+    const ringClip = customRing || embeddedSfx.ring;
+    const bursts = ringClip && ringClip.buf.duration > 0.4 ? 1 : 7;
+    for (let i = 0; i < bursts; i++) ring(t + i * 0.085, i % 2 ? 0.6 : -0.6);
   }
   announce.textContent = `${result.name} the ${result.animal}`;
   go.textContent = "Create Another";
