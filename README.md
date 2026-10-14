@@ -27,10 +27,10 @@ The backdrop is an original drawing in the spirit of a 16-bit "green hill" stage
 The page ships with six placeholder cards: original goofy critters drawn in code, not Sega characters. To show real fan art instead:
 
 1. Put images in `assets/fanart/` (PNG, JPG, WebP or GIF; about 400 px wide keeps the page small). **Only use pieces you have the artist's permission to use.**
-2. Optionally add `assets/fanart/credits.json` with a caption and credit per file: `{ "kevin.png": { "caption": "Kevin the Shrimp", "credit": "art by @someone" } }`.
+2. Optionally add `assets/fanart/credits.json` with a caption and credit per file: `{ "kevin.png": { "caption": "Kevin the Shrimp", "credit": "art by @someone" } }`. Add `"hero": true` to one piece to make it the finale: it is always shown, always last, lands big in the centre of the screen and holds for 2 s, then flashes across the background as **Create My Character** appears. The same piece flashes behind the name card when the page opens.
 3. Run `npm run embed-assets`. This copies the files into `index.html`, so the page stays a single offline file.
 
-When any fan art is embedded, only those images are shown (six at random if there are more) and the placeholders are not used.
+When any fan art is embedded, only those images are shown (six at random if there are more, the hero always among them) and the placeholders are not used.
 
 ## The word pools
 
@@ -67,9 +67,7 @@ Put a file named after its cue in `assets/sounds/` (MP3, WAV, OGG or M4A), for e
 | `ring` | the ring burst on the reveal (7 times) | −26 dBFS |
 | `jingle` | the act-clear fanfare on the reveal | −18 dBFS |
 
-To turn a cue off entirely, add an empty file named `<cue>.silent` (for example `assets/sounds/whoosh.silent`) and run `npm run embed-assets`. Short, dry clips work best for `type`, `tick` and `reelStop`; they play many times in a row. The `ring` cue normally fires seven times for a burst; a ring clip longer than 0.4 s plays once instead. A clip chosen in the dialog below still overrides an embedded jingle or ring for that visit.
-
-**Use your own sound clips** lets you pick a jingle and a ring sound from your device. Clips are decoded in memory, never uploaded, and forgotten when the page closes. They are level-matched to the built-in sounds when loaded, and the picker shows the adjustment it applied.
+To turn a cue off entirely, add an empty file named `<cue>.silent` (for example `assets/sounds/whoosh.silent`) and run `npm run embed-assets`. Short, dry clips work best for `type`, `tick` and `reelStop`; they play many times in a row. The `ring` cue normally fires seven times for a burst; a ring clip longer than 0.4 s plays once instead.
 
 Levels of the original sounds were measured by rendering offline, not set by ear. The built-in sounds for the newer cues (`start`, `type`, `whoosh`, `land`, `ready`, `press`, `reelStop`) have not been measured yet; their gains were set conservatively below the fanfare.
 
@@ -78,8 +76,7 @@ Levels of the original sounds were measured by rendering offline, not set by ear
 | Wheel tick | 0.32 | −27 dBFS |
 | Built-in ring chime | 0.14 | −30 dBFS |
 | Built-in fanfare | 0.49 | −18 dBFS |
-| Your jingle (after matching) | ≤ 0.95 | −18 dBFS |
-| Your ring sound (after matching) | ≤ 0.95 | −26 dBFS |
+| An embedded clip (after matching) | ≤ 0.95 | the cue's target above |
 
 ## Checks
 
@@ -88,7 +85,7 @@ npm install                        # Playwright is pinned to 1.56.1 in package-l
 npx playwright install chromium    # downloads the browser build that version expects
 npm test             # at 4 screen sizes: start screen, intro timing, card placement, spin, reveal,
                      # link, copy, offline; then the loop stops, intro skip, Space/Esc, mute memory,
-                     # a custom clip, and embedded sounds and fan art
+                     # embedded sounds and fan art, and the hero card
 npm run embed-assets # copies assets/sounds and assets/fanart into index.html
 npm run check-wiki   # verifies every species links to a real, non-disambiguation Wikipedia article
 ```
