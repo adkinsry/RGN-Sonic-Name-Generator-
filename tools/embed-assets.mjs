@@ -5,7 +5,6 @@
 // assets/fanart/*.<png|jpg|jpeg|webp|gif> are the intro's fan-art cards (up to 6 shown per visit).
 // assets/fanart/credits.json (optional): { "file.png": { "caption": "...", "credit": "art by @...", "hero": true } }
 // "hero": true marks the piece that always closes the intro, landing big in the centre (one at most).
-// assets/ui/ring.<png|gif|webp> replaces the drawn Press Start ring with that image (a transparent, square sprite).
 // Run it again after adding, renaming or deleting files; an empty folder removes those assets.
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import { extname, basename, join } from "node:path";
@@ -46,17 +45,11 @@ for (const f of list(fanDir)) {
 for (const f of Object.keys(credits)) if (!existsSync(join(fanDir, f))) console.warn(`  credits.json names ${f}, which is not in assets/fanart`);
 if (fanart.filter((p) => p.hero).length > 1) { console.warn("  more than one hero in credits.json; keeping the first"); fanart.forEach((p, i) => { if (p.hero && fanart.findIndex((q) => q.hero) !== i) p.hero = false; }); }
 
-let ring = null;
-for (const f of list(join(root, "assets/ui"))) {
-  const type = IMAGE_TYPES[extname(f).toLowerCase()];
-  if (type && basename(f, extname(f)) === "ring" && !ring) ring = dataUri(join(root, "assets/ui", f), type);
-}
-
 // "<" and "*/" are escaped so no caption can close the script tag or the marker comment.
-const json = JSON.stringify({ sounds, fanart, ring }).replace(/</g, "\\u003c").replace(/\*\//g, "*\\/");
+const json = JSON.stringify({ sounds, fanart }).replace(/</g, "\\u003c").replace(/\*\//g, "*\\/");
 const html = readFileSync(htmlPath, "utf8");
 const marker = /\/\*ASSETS\*\/[\s\S]*?\/\*\/ASSETS\*\//;
 if (!marker.test(html)) throw new Error("index.html is missing the /*ASSETS*/ ... /*/ASSETS*/ markers");
 writeFileSync(htmlPath, html.replace(marker, () => `/*ASSETS*/${json}/*/ASSETS*/`));
 const names = Object.keys(sounds).map((c) => (sounds[c] === null ? c + " (silent)" : c));
-console.log(`embedded ${names.length} sound(s) [${names.join(", ") || "none"}] and ${fanart.length} fan-art image(s)${ring ? " and the ring sprite" : ""}; index.html is now ${Math.round(readFileSync(htmlPath).length / 1024)} KB`);
+console.log(`embedded ${names.length} sound(s) [${names.join(", ") || "none"}] and ${fanart.length} fan-art image(s); index.html is now ${Math.round(readFileSync(htmlPath).length / 1024)} KB`);
