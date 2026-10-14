@@ -211,6 +211,8 @@ async function enterMachine(p, name = "Pat") {
     writeFileSync(join(dir, "assets/sounds/land.silent"), "");
     const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
     for (const f of ["a.png", "b.png", "c.png"]) writeFileSync(join(dir, "assets/fanart", f), png);
+    mkdirSync(join(dir, "assets/ui"), { recursive: true });
+    writeFileSync(join(dir, "assets/ui/ring.png"), png);
     writeFileSync(join(dir, "assets/fanart/credits.json"), JSON.stringify({ "a.png": { caption: "Spiky </script> Steve */", credit: "art by @tester" }, "b.png": { hero: true } }));
     execFileSync(process.execPath, [fileURLToPath(new URL("../tools/embed-assets.mjs", import.meta.url)), dir], { stdio: "pipe" });
 
@@ -219,6 +221,7 @@ async function enterMachine(p, name = "Pat") {
     const errors = [];
     p.on("pageerror", (e) => errors.push(e.message));
     await p.goto(pathToFileURL(join(dir, "index.html")).href);
+    const ringSprite = await p.$eval(".ring3d", (e) => e.classList.contains("sprite") && e.style.backgroundImage.startsWith("url(\"data:image/png"));
     await p.click("#pressStart");
     // The hero must not appear anywhere (card or background) before the intro's finale.
     const noEarlyHero = await p.waitForSelector("#nameInput", { timeout: 3000 }).then(() => p.evaluate(() =>
@@ -245,6 +248,7 @@ async function enterMachine(p, name = "Pat") {
       caps: [...document.querySelectorAll(".fan-card figcaption")].map((f) => f.textContent),
     }));
     console.log(`embedded: sounds [${got.sfx}], ${got.imgs} image card(s), captions ${JSON.stringify(got.caps)}; hero ${heroMid.w}px vs ${otherW}px, intro ${introMs} ms`);
+    check(ringSprite, "Press Start did not use the embedded ring image");
     check(noEarlyHero, "hero shown on the start screen before the intro finale");
     check(got.order[got.order.length - 1] === true && got.order.filter(Boolean).length === 1, "hero is not the single last card");
     check(heroMid.shown && !heroMid.away && heroMid.w > otherW * 1.3, `hero at 3.6 s: shown ${heroMid.shown}, away ${heroMid.away}, ${heroMid.w}px vs ${otherW}px`);
