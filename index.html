@@ -225,8 +225,33 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
 }
 .start-card.shake { animation: shake .35s; }
 .start-card.in { animation: pop .5s cubic-bezier(.2, 1.6, .4, 1) both; }
-.press-start { font-size: clamp(26px, 7vw, 36px); padding: 16px 44px; animation: pulse 1.6s ease-in-out infinite; }
-@keyframes pulse { 50% { filter: brightness(1.15); box-shadow: 0 6px 0 #8E0E12, 0 0 30px rgba(255, 210, 31, .85); } }
+/* The start button is a spinning gold ring, the first thing you collect in any Sonic game. The
+   button itself stays still (the ring spins inside it) so it is a steady tap target. */
+.press-start {
+  display: grid; justify-items: center; gap: 22px;
+  padding: 24px; background: none; border: 0; cursor: pointer; perspective: 600px;
+}
+.press-start:focus-visible { outline: 3px solid var(--gold); outline-offset: 6px; border-radius: 20px; }
+.ring3d {
+  width: clamp(110px, 30vw, 160px); aspect-ratio: 1; border-radius: 50%; box-sizing: border-box;
+  border: 22px solid var(--gold);
+  box-shadow: inset 0 0 0 5px #8A5A00, 0 0 0 5px #8A5A00, 0 0 36px rgba(255, 210, 31, .75);
+  position: relative; animation: ringspin 1.3s linear infinite; transform-style: preserve-3d;
+}
+.ring3d::after { /* the glint on the upper left, as on the page's icon */
+  content: ""; position: absolute; inset: -14px; border-radius: 50%;
+  border: 6px solid transparent; border-top-color: #FFF6B0; border-left-color: #FFF6B0;
+  transform: rotate(-20deg);
+}
+.press-label {
+  font: 13px/1 var(--hud); color: var(--gold); letter-spacing: .08em;
+  text-shadow: 2px 2px 0 var(--navy-deep); animation: blink 1s steps(1) infinite;
+}
+.press-start.go .ring3d { animation: ringzoom .55s ease-in both; }
+.press-start.go .press-label { animation: none; opacity: 0; }
+@keyframes ringspin { to { transform: rotateY(360deg); } }
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes ringzoom { to { transform: rotateY(720deg) scale(7); opacity: 0; } }
 .start-title {
   margin: 0; font: 400 clamp(26px, 7vw, 40px)/1.05 var(--display); color: var(--gold);
   -webkit-text-stroke: 2px var(--navy-deep); paint-order: stroke fill;
@@ -241,8 +266,7 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
 .start-input:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .start-err { margin: 0; min-height: 1.3em; font: 700 14px var(--body); color: #FFC2C2; }
 .intro-cards { position: absolute; inset: 0; overflow: hidden; }
-/* The hero piece flashed across the whole screen: behind the name card on arrival, and again
-   behind the greeting when the intro ends. */
+/* The hero piece flashed across the whole screen behind the greeting when the intro ends. */
 .hero-bg {
   position: absolute; inset: 0; pointer-events: none; opacity: 0;
   background-size: cover; background-position: center 20%;
@@ -377,7 +401,9 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
   .machine.live .bulbs i { animation: none; background: var(--gold); }
   .start-card.shake { animation: none; }
   .start-card.in { animation: none; }
-  .press-start { animation: none; }
+  .ring3d { animation: none; transform: rotateY(25deg); }
+  .press-label { animation: none; }
+  .press-start.go .ring3d { animation: fadeout .3s both; }
   .hero-bg.show { animation: none; opacity: .22; }
   .fan-card.hero.away { animation: none; visibility: hidden; }
 }
@@ -462,8 +488,10 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
 </div>
 
 <section class="start" id="start">
-  <div class="hero-bg" id="startBg" aria-hidden="true"></div>
-  <button class="go press-start" id="pressStart" type="button">Press Start</button>
+  <button class="press-start" id="pressStart" type="button" aria-label="Press Start">
+    <span class="ring3d" aria-hidden="true"></span>
+    <span class="press-label" aria-hidden="true">PRESS START</span>
+  </button>
   <form class="start-card" id="startForm" novalidate hidden>
     <h1 class="start-title">Hedgehog OC Machine</h1>
     <label class="start-label" for="nameInput">ENTER YOUR NAME</label>
@@ -1233,7 +1261,6 @@ const introCenter = document.getElementById("introCenter");
 const introText = document.getElementById("introText");
 const introSr = document.getElementById("introSr");
 const createBtn = document.getElementById("createBtn");
-const startBg = document.getElementById("startBg");
 const introBg = document.getElementById("introBg");
 
 const CHAR_MS = 55, LINE_PAUSE_MS = 450;            // greeting typing speed
@@ -1502,12 +1529,8 @@ window.addEventListener("resize", () => {
   }, 150);
 });
 // Press Start is the first user gesture, which is the earliest a phone will let audio play. It
-// flashes the hero piece across the screen, starts the opening theme and brings in the name card.
-function flashStart() {
-  if (!HERO) return;
-  startBg.style.backgroundImage = `url("${HERO.src}")`;
-  startBg.classList.remove("show"); void startBg.offsetWidth; startBg.classList.add("show");
-}
+// starts the opening theme and brings in the name card. The hero piece stays hidden until the
+// intro's finale, after every card has landed.
 let startTheme = null; // the playing "start" clip, so Enter does not restart it
 function playStartTheme() {
   if (startTheme) return;
@@ -1519,11 +1542,14 @@ pressStart.addEventListener("click", () => {
   if (stage !== "start" || !startForm.hidden) return;
   audio();
   sfxReady.then(() => { if (stage === "start") playStartTheme(); });
-  flashStart();
-  pressStart.hidden = true;
-  startForm.hidden = false;
-  startForm.classList.add("in");
-  nameInput.focus({ preventScroll: true });
+  pressStart.classList.add("go"); // the ring flies into the camera...
+  pressStart.disabled = true;
+  setTimeout(() => {                 // ...and the name card pops in behind it
+    pressStart.hidden = true;
+    startForm.hidden = false;
+    startForm.classList.add("in");
+    nameInput.focus({ preventScroll: true });
+  }, reduceMotion ? 250 : 450);
 });
 if (window.matchMedia("(hover: hover)").matches) pressStart.focus({ preventScroll: true });
 
