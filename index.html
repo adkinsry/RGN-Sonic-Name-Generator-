@@ -34,6 +34,7 @@
   --red: #E3262B;
   --blue: #1F5FD6;
   --white: #FFFFFF;
+  --pink: #FF7BC4;
   --ground-h: 56px;
   --rowH: clamp(40px, 7vh, 58px);
   --vis: 5;
@@ -87,6 +88,39 @@ body {
   padding: 8px 10px; cursor: pointer; text-shadow: none;
 }
 .mute.off { color: var(--gold); }
+.hud-btns { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.mute.on { color: var(--pink); border-color: var(--pink); }
+body[data-stage="start"] #modeBtn, body[data-stage="intro"] #modeBtn { visibility: hidden; }
+
+/* ---------- After Dark mode: same machine, night palette, cheekier word pools ---------- */
+body[data-mode="dark"] {
+  --sky-top: #0D0526; --sky-mid: #4A1278; --sky-low: #FF4FA3;
+  --grass: #2E8F5A; --dirt-a: #6B2C5C; --dirt-b: #3A1437;
+  --navy: #2B0A4E; --navy-deep: #150425;
+  --red: #D81B7A;
+}
+body[data-mode="dark"] .go { background: linear-gradient(#FF4FB0, var(--red)); box-shadow: 0 6px 0 #7A0D45, 0 10px 18px rgba(21, 4, 37, .5); }
+body[data-mode="dark"] .go:active:not(:disabled) { box-shadow: 0 2px 0 #7A0D45; }
+body[data-mode="dark"] .start-title { color: var(--pink); }
+.start-badge {
+  margin: -6px 0 0; font: 10px/1.6 var(--hud); color: var(--pink); letter-spacing: .08em;
+  text-shadow: 2px 2px 0 var(--navy-deep);
+}
+.mode-switch {
+  display: flex; border: 3px solid var(--navy-deep); border-radius: 999px; overflow: hidden;
+  background: var(--navy-deep);
+}
+.mode-btn { font: 800 14px var(--body); color: var(--white); background: transparent; border: 0; padding: 8px 16px; cursor: pointer; }
+.mode-btn.on { background: var(--gold); color: var(--navy-deep); }
+body[data-mode="dark"] .mode-btn.on { background: var(--pink); color: var(--white); }
+.mode-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: -3px; }
+.age-gate {
+  display: grid; gap: 10px; justify-items: center; padding: 10px 12px;
+  border: 2px dashed var(--pink); border-radius: 12px;
+  font: 10px/1.7 var(--hud); color: var(--pink); letter-spacing: .04em;
+}
+.age-gate p { margin: 0; }
+.age-gate .row-btns { display: flex; gap: 10px; }
 
 /* ---------- Machine ---------- */
 .stage { flex: 1; min-height: 0; display: grid; place-items: center; }
@@ -345,6 +379,11 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
   text-shadow: 3px 3px 0 var(--navy-deep);
   animation: pop .4s .1s cubic-bezier(.2, 1.6, .4, 1) both;
 }
+.rv-bio {
+  margin-top: 10px; max-width: 32rem; font: 800 clamp(15px, 2.4vw, 21px)/1.3 var(--body); color: var(--white);
+  text-shadow: 2px 2px 0 var(--navy-deep);
+  animation: fadein .4s .7s both;
+}
 .rv-tag {
   margin-top: 14px; font-family: var(--hud); font-size: clamp(9px, 1.6vw, 12px); color: var(--gold);
   background: var(--navy-deep); padding: 8px 12px; border-radius: 6px; letter-spacing: .06em;
@@ -432,7 +471,10 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
       <dt>TIME</dt><dd id="hudTime">0:00</dd>
       <dt>RINGS</dt><dd id="hudRings">0</dd>
     </dl>
-    <button class="mute" id="mute" type="button">SOUND: ON</button>
+    <div class="hud-btns">
+      <button class="mute" id="mute" type="button">SOUND: ON</button>
+      <button class="mute" id="modeBtn" type="button" aria-pressed="false">AFTER DARK: OFF</button>
+    </div>
   </header>
 
   <main class="stage">
@@ -466,8 +508,20 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
   <button class="go press-start" id="pressStart" type="button">Press Start</button>
   <form class="start-card" id="startForm" novalidate hidden>
     <h1 class="start-title">Hedgehog OC Machine</h1>
+    <p class="start-badge" id="startBadge" hidden>AFTER DARK EDITION · 18+</p>
     <label class="start-label" for="nameInput">ENTER YOUR NAME</label>
     <input class="start-input" id="nameInput" name="name" maxlength="20" autocomplete="given-name" enterkeyhint="go" spellcheck="false">
+    <div class="mode-switch" role="group" aria-label="Mode">
+      <button class="mode-btn on" id="modeClassic" type="button" aria-pressed="true">Classic</button>
+      <button class="mode-btn" id="modeDark" type="button" aria-pressed="false">After Dark 18+</button>
+    </div>
+    <div class="age-gate" id="ageGate" hidden>
+      <p>AFTER DARK IS 18+ AND MILDLY INAPPROPRIATE.<br>ARE YOU 18 OR OLDER?</p>
+      <div class="row-btns">
+        <button class="side" id="ageYes" type="button">Obviously</button>
+        <button class="side" id="ageNo" type="button">...no</button>
+      </div>
+    </div>
     <button class="go" type="submit">Let's Go!</button>
     <p class="start-err" id="startErr" role="alert"></p>
   </form>
@@ -491,7 +545,8 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
     <div class="rv-line rv-name" id="rvName"></div>
     <div class="rv-the">the</div>
     <a class="rv-line rv-animal" id="rvAnimal" target="_blank" rel="noopener noreferrer"></a>
-    <div class="rv-tag">ORIGINAL CHARACTER · DO NOT STEAL</div>
+    <div class="rv-bio" id="rvBio" hidden></div>
+    <div class="rv-tag" id="rvTag">ORIGINAL CHARACTER · DO NOT STEAL</div>
     <div class="rv-hint" id="rvHint">tap the species for a photo + Wikipedia</div>
   </div>
 </div>
@@ -518,23 +573,33 @@ const NAMES_MODERN = ["Aiden", "Jaxon", "Brayden", "Kayden", "Nevaeh", "Paisley"
 const NAMES_SEGA = ["Zoom", "Dash", "Bolt", "Skid", "Blitz", "Rumble", "Clank", "Grind", "Drift", "Flicker", "Rivet", "Torque", "Scuttle", "Nimbus", "Quill", "Jolt", "Swoop", "Glide", "Crag", "Flint", "Ember", "Vortex", "Static", "Ricochet", "Nitro", "Turbo", "Ripple", "Scamper", "Spindle", "Cinder", "Gale", "Dynamo", "Twister", "Piston", "Rattle", "Sprocket", "Zephyr", "Ozone", "Riff", "Slate", "Grit", "Hex", "Tempo", "Flux", "Fizz", "Pogo", "Sonar", "Pulse", "Skate", "Torrent", "Axle", "Brisk", "Scorch", "Quasar", "Rebel", "Crank", "Zipline", "Volt", "Mach", "Burst", "Comet", "Rocket", "Flare", "Frost", "Gust", "Quake", "Spark", "Zap", "Whirl", "Dart", "Streak", "Glimmer", "Shimmer", "Cobalt", "Indigo", "Scarlet", "Sable", "Bramble", "Thistle", "Pepper", "Chili", "Mocha", "Biscuit", "Pickle", "Nacho", "Widget", "Gizmo", "Wrench", "Lugnut", "Chrome", "Fuse", "Blip", "Pixel", "Byte", "Glitch", "Echo", "Radar", "Beacon", "Photon", "Neon", "Glacier", "Dune", "Reef", "Lagoon", "Tide", "Squall", "Monsoon", "Blizzard", "Typhoon", "Avalanche", "Boulder", "Pebble", "Haze", "Throttle", "Gear", "Zigzag", "Rascal", "Ruckus", "Tango", "Groove"];
 const NAME_POOLS = [NAMES_PLAIN, NAMES_MODERN, NAMES_SEGA];
 
+// After Dark mode: a party setting with cheekier pools. The names are pure romance-novel; the
+// species are all real animals (that is the joke), so the Wikipedia link still works.
+let mode = "classic"; // classic | dark
+const NAMES_DARK = ["Candy", "Bambi", "Roxy", "Trixie", "Bunny", "Cherry", "Lola", "Vixen", "Misty", "Brandy", "Ginger", "Velvet", "Sapphire", "Crystal", "Destiny", "Angel", "Sugar", "Honey", "Peaches", "Kitty", "Foxy", "Chastity", "Dusty", "Randy", "Lance", "Rod", "Buck", "Stud", "Fabio", "Rico", "Thor", "Chase", "Hunter", "Magnum", "Dirk", "Rocco", "Remy", "Jett", "Cash", "Duke", "Ace", "Rex", "Romeo", "Valentino", "Bianca", "Scarlett", "Jasmine", "Diamond", "Lexi", "Tiffani", "Barbie", "Dolly", "Luna", "Mercedes", "Porsche", "Chanel", "Tequila", "Margarita", "Champagne", "Whiskey", "Cinnamon", "Pepper", "Mocha", "Amber", "Jade", "Roxanne", "Gigi", "Coco", "Fifi", "Lulu", "Mimi", "Dixie", "Sassy", "Lusty Larry", "Big Gary", "Hot Rod", "Slick Rick", "Smooth Steve", "Fancy Nancy", "Saucy Sue", "Naughty Norm", "Frisky Phil", "Spicy Sharon"];
+
 // Mostly odd creatures; pets and farm animals get a small share on purpose.
 // Hedgehog, fox and echidna are out: those three are already taken (Flying Fox too, to avoid the look of one).
 const ANIMALS_ODD = ["Aye-aye", "Axolotl", "Pangolin", "Okapi", "Tapir", "Quokka", "Numbat", "Quoll", "Tarsier", "Binturong", "Fossa", "Saiga", "Gerenuk", "Dik-dik", "Kinkajou", "Coati", "Tenrec", "Solenodon", "Hyrax", "Aardwolf", "Aardvark", "Capybara", "Cassowary", "Shoebill", "Hoatzin", "Kakapo", "Kea", "Takahe", "Tuatara", "Blobfish", "Narwhal", "Dugong", "Manatee", "Olm", "Hellbender", "Mudskipper", "Sunfish", "Oarfish", "Anglerfish", "Frilled Shark", "Goblin Shark", "Wobbegong", "Nudibranch", "Mantis Shrimp", "Coconut Crab", "Horseshoe Crab", "Pistol Shrimp", "Sea Pig", "Giant Isopod", "Tardigrade", "Pika", "Jerboa", "Springhare", "Markhor", "Takin", "Babirusa", "Warthog", "Peccary", "Maned Wolf", "Dhole", "Bush Dog", "Raccoon Dog", "Civet", "Genet", "Linsang", "Mongoose", "Meerkat", "Honey Badger", "Wolverine", "Fisher", "Marten", "Tayra", "Zorilla", "Olingo", "Ringtail", "Red Panda", "Slow Loris", "Bushbaby", "Potto", "Colugo", "Sugar Glider", "Bilby", "Bandicoot", "Wombat", "Cuscus", "Tree Kangaroo", "Platypus", "Thylacine", "Dodo", "Pademelon", "Potoroo", "Bettong", "Gharial", "Caiman", "Gila Monster", "Thorny Devil", "Frilled Lizard", "Basilisk", "Chuckwalla", "Komodo Dragon", "Skink", "Caecilian", "Glass Frog", "Purple Frog", "Mata Mata", "Snapping Turtle", "Secretary Bird", "Frogmouth", "Potoo", "Oilbird", "Hornbill", "Toucan", "Puffin", "Blue-footed Booby", "Frigatebird", "Lyrebird", "Bowerbird", "Hoopoe", "Roadrunner", "Kiwi", "Quetzal", "Ibis", "Marabou Stork", "Condor", "Harpy Eagle", "Albatross", "Cuttlefish", "Nautilus", "Vampire Squid", "Dumbo Octopus", "Leafy Seadragon", "Seahorse", "Lamprey", "Hagfish", "Coelacanth", "Arapaima", "Sawfish", "Manta Ray", "Beluga", "Vaquita", "Walrus", "Elephant Seal", "Sea Otter", "Muskox", "Ibex", "Pronghorn", "Addax", "Kudu", "Klipspringer", "Chevrotain", "Muntjac", "Moose", "Mandrill", "Proboscis Monkey", "Gelada", "Uakari", "Tamarin", "Howler Monkey", "Siamang", "Anteater", "Armadillo", "Sloth", "Naked Mole-rat", "Star-nosed Mole", "Desman", "Shrew", "Viscacha", "Mara", "Agouti", "Porcupine", "Marmot", "Dormouse", "Lemming", "Sea Urchin", "Sea Cucumber", "Firefly", "Stag Beetle", "Dung Beetle", "Mantis", "Stick Insect", "Cicada", "Luna Moth", "Dragonfly", "Scorpion", "Jumping Spider", "Velvet Worm", "Leech", "Pufferfish", "Honey Possum", "Serval", "Margay", "Jaguarundi", "Pallas's Cat", "Sand Cat", "Clouded Leopard", "Sun Bear", "Spectacled Bear", "Tasmanian Devil", "Dunnart", "Marsupial Mole", "Degu", "Paca", "Pacarana", "Hutia", "Gundi", "Kangaroo Rat", "Elephant Shrew", "Golden Mole", "Moonrat", "Tree Shrew", "Indri", "Sifaka", "Mouse Lemur", "Douc", "Drill", "Bonobo", "Bongo", "Anoa", "Bharal", "Royal Antelope", "Vicuña", "Pudu", "Water Deer", "Musk Deer", "Pygmy Hippo", "Leopard Seal", "Boto", "Grison", "Stink Badger", "Hog Badger", "Cacomistle", "Ethiopian Wolf", "Painted Dog", "Striped Hyena", "Falanouc", "Kusimanse", "Nilgai", "Vampire Bat", "Bumblebee Bat", "Hammer-headed Bat", "Tamandua", "Silky Anteater", "Pink Fairy Armadillo", "Mammoth", "Tinamou", "Rockhopper Penguin", "Anhinga", "Hamerkop", "Jabiru", "Lammergeier", "Capercaillie", "Curassow", "Malleefowl", "Kagu", "Sunbittern", "Bustard", "Seriema", "Jacana", "Phalarope", "Skimmer", "Sandgrouse", "Nicobar Pigeon", "Turaco", "Burrowing Owl", "Elf Owl", "Sword-billed Hummingbird", "Bee Hummingbird", "Kookaburra", "Motmot", "Aracari", "Honeyguide", "Wryneck", "Jacamar", "Umbrellabird", "Cock-of-the-rock", "Manakin", "Pitta", "Fairywren", "Drongo", "Currawong", "Riflebird", "Wallcreeper", "Oxpecker", "Bobolink", "Tokay Gecko", "Leaf-tailed Gecko", "Panther Chameleon", "Uromastyx", "Marine Iguana", "Horned Lizard", "Perentie", "Tegu", "Caiman Lizard", "Armadillo Lizard", "Slowworm", "Vine Snake", "Flying Snake", "Taipan", "Gaboon Viper", "Bushmaster", "Sidewinder", "Softshell Turtle", "Pig-nosed Turtle", "Alligator Snapping Turtle", "Mudpuppy", "Amphiuma", "Giant Salamander", "Poison Dart Frog", "Goliath Frog", "Surinam Toad", "Tomato Frog", "Darwin's Frog", "Hairy Frog", "Paradox Frog", "Lungfish", "Bichir", "Alligator Gar", "Arowana", "Electric Eel", "Glass Catfish", "Candiru", "Goonch", "Frogfish", "Trumpetfish", "Stonefish", "Lumpsucker", "Snailfish", "Goliath Grouper", "Napoleon Wrasse", "Opah", "Cowfish", "Mandarinfish", "Icefish", "Viperfish", "Hatchetfish", "Barreleye", "Gulper Eel", "Fangtooth", "Torpedo Ray", "Guitarfish", "Megamouth Shark", "Greenland Shark", "Cookiecutter Shark", "Sawshark", "Epaulette Shark", "Swell Shark", "Blue-ringed Octopus", "Mimic Octopus", "Bobtail Squid", "Argonaut", "Cone Snail", "Yeti Crab", "Triops", "Vinegaroon", "Peacock Spider", "Diving Bell Spider", "Mole Cricket", "Antlion", "Atlas Moth", "Orchid Bee", "Tarantula Hawk", "Velvet Ant", "Bombardier Beetle", "Giant Water Bug", "Box Jellyfish", "Portuguese Man o' War", "Siphonophore", "Comb Jelly", "Glass Sponge", "Basket Star", "Salp", "Pyrosome", "Bobbit Worm", "Christmas Tree Worm", "Sea Angel", "Glass Octopus", "Flapjack Octopus", "Firefly Squid"];
 const ANIMALS_COMMON = ["Cat", "Dog", "Goat", "Hamster", "Goldfish", "Llama", "Chicken", "Duck", "Cow", "Donkey", "Parakeet", "Sheep", "Rabbit", "Horse", "Guinea Pig", "Turkey", "Pig", "Pony", "Cockatiel", "Gerbil", "Ferret", "Mule", "Ox", "Rooster", "Alpaca", "Goose", "Corgi", "Pug", "Beagle", "Poodle", "Dachshund", "Chihuahua"];
 const COMMON_SHARE = 0.1;
+const ANIMALS_DARK = ["Booby", "Blue-footed Booby", "Red-footed Booby", "Masked Booby", "Great Tit", "Blue Tit", "Coal Tit", "Long-tailed Tit", "Bearded Tit", "Penduline Tit", "Bushtit", "Tufted Titmouse", "Shag", "Spotted Shag", "Woodcock", "Cockchafer", "Cockatoo", "Cockle", "Dickcissel", "Slippery Dick", "Knob-billed Duck", "Knobbed Hornbill", "Wrinkled Hornbill", "Dik-dik", "Cougar", "Beaver", "Wombat", "Hairy-nosed Wombat", "Horny Toad", "Hooded Seal", "Leopard Slug", "Banana Slug", "Kissing Gourami", "Sea Cucumber", "Sperm Whale", "Humpback Whale", "Humphead Wrasse", "Naked Mole-rat", "Sugar Glider", "Honey Badger", "Lovebird", "Bonobo", "Slow Loris", "Mudpuppy", "Ruff", "Sexy Shrimp", "Spiny Lumpsucker", "Vampire Squid", "Pink Fairy Armadillo", "Screaming Hairy Armadillo", "Mandrill", "Peacock", "Shrew", "Bufflehead", "Boobook", "Tasselled Wobbegong", "Tufted Puffin", "Pleasing Fungus Beetle", "Hagfish", "Goldeneye", "Bearded Dragon", "Swallow", "Hoary Marmot", "Hairy Frog", "Bottlenose Dolphin", "Spoonbill", "Wild Ass", "Assassin Bug", "Rough-skinned Newt", "Pileated Woodpecker", "Goatsucker", "Jackass Penguin", "Hooker's Sea Lion", "Moustached Guenon", "Pink-footed Goose", "Big-headed Turtle", "Dumbo Octopus", "Red-breasted Nuthatch", "Lesser Spotted Dogfish"];
+// One line of character bio for an After Dark reveal.
+const BIOS_DARK = ["Collects rings. All kinds.", "Gotta go fast. Has been asked to slow down.", "Has a thing for loops.", "Only comes out after dark.", "Not the hedgehog you bring home to your mom.", "Will spin dash for drinks.", "Banned from Casino Night Zone. Twice.", "Chaos Emeralds? Chaos everything.", "Wears gold rings. Nothing else.", "Loses all their rings in one hit. Every time.", "Zero chill. Extra chili dog.", "Knows every shortcut in Green Hill. And your heart.", "Super form unlocked. Please don't ask how.", "Just here for the extra lives.", "Has never once used a shield.", "Big fan of the spring. Any spring.", "Will absolutely steal your rings.", "Been through every pipe in Chemical Plant.", "Goes super for the right person.", "Does not do speed limits.", "Looking for someone to share a 1-UP with.", "Hit the bumper. Liked it.", "Tails has been told not to call.", "Moves fast, texts faster.", "A smooth operator in Marble Zone.", "Yes, the quills are real.", "Rolls into every situation.", "Bounces back from anything.", "A ten-ring night kind of character.", "Took the loop twice on purpose.", "Available for special stages.", "Swipes right on every bonus stage."];
 // Wikipedia article per species. Default is the sentence-case name ("Red Panda" -> "Red panda");
 // the map covers names that would land on a disambiguation page or a differently titled article.
 // Every one of the 410 slugs was checked against the MediaWiki API on 2026-09-30:
 // 0 missing, 0 disambiguation pages.
 const WIKI = {"Fisher": "Fisher (animal)","Mara": "Mara (mammal)","Genet": "Genet (animal)","Fossa": "Fossa (animal)","Kiwi": "Kiwi (bird)","Drill": "Drill (animal)","Skimmer": "Skimmer (bird)","Beluga": "Beluga whale","Argonaut": "Argonaut (animal)","Basilisk": "Basiliscus (lizard)","Sunfish": "Ocean sunfish","Turkey": "Turkey (bird)","Chihuahua": "Chihuahua (dog)","Cow": "Cattle","Corgi": "Welsh Corgi","Mammoth": "Mammoth","Boto": "Amazon river dolphin","Painted Dog": "African wild dog","Dumbo Octopus": "Grimpoteuthis","Sea Pig": "Scotoplanes","Stick Insect": "Phasmatodea","Velvet Worm": "Onychophora","Pistol Shrimp": "Alpheidae","Pufferfish": "Tetraodontidae","Bushbaby": "Galago","Zorilla": "Striped polecat","Tree Kangaroo": "Tree-kangaroo","Secretary Bird": "Secretarybird","Takahe": "Takahē","Kakapo": "Kākāpō","Saiga": "Saiga antelope","Goliath Grouper": "Atlantic goliath grouper","Napoleon Wrasse": "Humphead wrasse","Water Deer": "Water deer","Mudpuppy": "Necturus","Frilled Lizard": "Chlamydosaurus","Blobfish": "Psychrolutes marcidus","Bongo": "Bongo (antelope)","Jacana": "Jacanidae","Leaf-tailed Gecko": "Uroplatus","Vine Snake": "Ahaetulla","Bushmaster": "Lachesis (genus)","Sidewinder": "Crotalus cerastes","Glass Catfish": "Kryptopterus vitreolus","Candiru": "Candiru (fish)","Mandarinfish": "Synchiropus splendidus","Icefish": "Channichthyidae","Hatchetfish": "Marine hatchetfish"};
+// After Dark species whose article has a different title (checked against the MediaWiki API on 2026-10-15).
+Object.assign(WIKI, {"Shag": "European shag", "Bearded Tit": "Bearded reedling", "Cockle": "Cockle (bivalve)", "Hairy-nosed Wombat": "Southern hairy-nosed wombat", "Horny Toad": "Horned lizard", "Ruff": "Ruff (bird)", "Sexy Shrimp": "Thor amboinensis", "Spiny Lumpsucker": "Pacific spiny lumpsucker", "Peacock": "Peafowl", "Boobook": "Australian boobook", "Goldeneye": "Common goldeneye", "Wild Ass": "African wild ass", "Goatsucker": "Nightjar", "Jackass Penguin": "African penguin", "Hooker's Sea Lion": "New Zealand sea lion", "Dumbo Octopus": "Grimpoteuthis", "Lesser Spotted Dogfish": "Small-spotted catshark"});
 const wikiUrl = (name) => "https://en.wikipedia.org/wiki/" + encodeURIComponent((WIKI[name] || (name[0].toUpperCase() + name.slice(1).toLowerCase())).replace(/ /g, "_"));
 
 
 const rand = (n) => Math.floor(Math.random() * n);
 const pickFrom = (a) => a[rand(a.length)];
-const randomName = () => pickFrom(NAME_POOLS[rand(NAME_POOLS.length)]);
-const randomAnimal = () => pickFrom(Math.random() < COMMON_SHARE ? ANIMALS_COMMON : ANIMALS_ODD);
+const randomName = () => (mode === "dark" ? pickFrom(NAMES_DARK) : pickFrom(NAME_POOLS[rand(NAME_POOLS.length)]));
+const randomAnimal = () => (mode === "dark" ? pickFrom(ANIMALS_DARK) : pickFrom(Math.random() < COMMON_SHARE ? ANIMALS_COMMON : ANIMALS_ODD));
 
 /* ================= Timing (ms) ================= */
 const NAME_SPIN_MS = 4300;   // name reel stops first
@@ -994,6 +1059,9 @@ const machine = document.getElementById("machine");
 const reveal = document.getElementById("reveal");
 const rvName = document.getElementById("rvName");
 const rvAnimal = document.getElementById("rvAnimal");
+const rvBio = document.getElementById("rvBio");
+const rvTag = document.getElementById("rvTag");
+const rvHint = document.getElementById("rvHint");
 const announce = document.getElementById("announce");
 const hudScore = document.getElementById("hudScore");
 const hudTime = document.getElementById("hudTime");
@@ -1001,7 +1069,7 @@ const hudRings = document.getElementById("hudRings");
 const copyBtn = document.getElementById("copyBtn");
 const shareBtn = document.getElementById("shareBtn");
 const canShare = typeof navigator.share === "function";
-if (!window.matchMedia("(hover: none)").matches) document.getElementById("rvHint").textContent = "click the species for a photo + Wikipedia";
+const tapWord = window.matchMedia("(hover: none)").matches ? "tap" : "click";
 
 let stage = "start"; // start | intro | main: which screen is showing
 let phase = "idle"; // idle | spinning | holding | revealed
@@ -1018,7 +1086,7 @@ function spin() {
   audio();
   clearReveal();
   const now = performance.now();
-  result = { name: pickDifferent(randomName, reelName.current()), animal: pickDifferent(randomAnimal, reelAnimal.current()) };
+  result = { name: pickDifferent(randomName, reelName.current()), animal: pickDifferent(randomAnimal, reelAnimal.current()), bio: mode === "dark" ? pickFrom(BIOS_DARK) : "" };
   reelName.start(result.name, NAME_ITEMS, NAME_SPIN_MS, now);
   reelAnimal.start(result.animal, ANIMAL_ITEMS, ANIMAL_SPIN_MS, now);
   spinStart = now;
@@ -1053,11 +1121,13 @@ function showReveal() {
   machine.classList.add("won");
   rvName.textContent = result.name;
   rvAnimal.textContent = result.animal;
+  rvBio.textContent = result.bio;
+  rvBio.hidden = !result.bio;
   rvAnimal.href = wikiUrl(result.animal);
   rvAnimal.setAttribute("aria-label", `${result.animal}: open its Wikipedia article in a new tab`);
   reveal.hidden = false;
   // Restart the CSS entrance animations on every reveal.
-  reveal.querySelectorAll(".rv-line, .rv-the, .rv-tag, .rv-hint, .scrim, .rays, .flash").forEach((n) => {
+  reveal.querySelectorAll(".rv-line, .rv-the, .rv-bio, .rv-tag, .rv-hint, .scrim, .rays, .flash").forEach((n) => {
     n.style.animation = "none"; void n.offsetWidth; n.style.animation = "";
   });
   fitLine(rvName); fitLine(rvAnimal);
@@ -1078,7 +1148,7 @@ function showReveal() {
     const bursts = ringClip && ringClip.buf.duration > 0.4 ? 1 : 7;
     for (let i = 0; i < bursts; i++) ring(t + i * 0.085, i % 2 ? 0.6 : -0.6);
   }
-  announce.textContent = `${result.name} the ${result.animal}`;
+  announce.textContent = fullName() + (result.bio ? ". " + result.bio : "");
   go.textContent = "Create Another";
   go.disabled = false;
   copyBtn.hidden = false; copyBtn.textContent = "Copy name"; copyBtn.classList.remove("done");
@@ -1114,7 +1184,7 @@ copyBtn.addEventListener("click", async () => {
 });
 shareBtn.addEventListener("click", async () => {
   if (!result) return;
-  try { await navigator.share({ title: "Hedgehog OC Machine", text: `${fullName()} - my Sonic fan character` }); }
+  try { await navigator.share({ title: "Hedgehog OC Machine", text: `${fullName()} - my Sonic fan character${result.bio ? ". " + result.bio : ""}` }); }
   catch (e) { /* the user closed the share sheet */ }
 });
 
@@ -1176,6 +1246,42 @@ muteBtn.addEventListener("click", () => {
   audio(); syncMute();
 });
 syncMute();
+
+/* ================= After Dark mode ================= */
+const modeBtn = document.getElementById("modeBtn");
+const modeClassic = document.getElementById("modeClassic");
+const modeDark = document.getElementById("modeDark");
+const ageGate = document.getElementById("ageGate");
+const startBadge = document.getElementById("startBadge");
+function setMode(m) {
+  mode = m;
+  const dark = m === "dark";
+  document.body.dataset.mode = m;
+  modeBtn.textContent = dark ? "AFTER DARK: ON" : "AFTER DARK: OFF";
+  modeBtn.classList.toggle("on", dark);
+  modeBtn.setAttribute("aria-pressed", String(dark));
+  modeClassic.classList.toggle("on", !dark); modeClassic.setAttribute("aria-pressed", String(!dark));
+  modeDark.classList.toggle("on", dark); modeDark.setAttribute("aria-pressed", String(dark));
+  startBadge.hidden = !dark;
+  rvTag.textContent = dark ? "AFTER DARK · WHAT HAPPENS IN THE ZONE STAYS IN THE ZONE" : "ORIGINAL CHARACTER · DO NOT STEAL";
+  rvHint.textContent = dark ? `${tapWord} the species: yes, it is real` : `${tapWord} the species for a photo + Wikipedia`;
+  if (phase === "idle") { reelName.setIdle(); reelAnimal.setIdle(); } // show the new pools in the windows
+}
+// The start card asks the 18+ question once, played straight-faced; the HUD button just flips.
+modeClassic.addEventListener("click", () => { ageGate.hidden = true; setMode("classic"); });
+modeDark.addEventListener("click", () => {
+  if (mode === "dark") return;
+  document.getElementById("startErr").textContent = "";
+  ageGate.hidden = false;
+  document.getElementById("ageYes").focus({ preventScroll: true });
+});
+document.getElementById("ageYes").addEventListener("click", () => { ageGate.hidden = true; audio(); sfx("press"); setMode("dark"); });
+document.getElementById("ageNo").addEventListener("click", () => {
+  ageGate.hidden = true; setMode("classic");
+  document.getElementById("startErr").textContent = "Classic it is, young hedgehog.";
+});
+modeBtn.addEventListener("click", () => { audio(); sfx("press"); setMode(mode === "dark" ? "classic" : "dark"); });
+setMode("classic");
 
 /* ================= Start screen and intro ================= */
 // Placeholder fan art: original goofy critters drawn here, not Sega characters. Real pieces go in

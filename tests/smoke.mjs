@@ -2,7 +2,7 @@
 // checks the reveal, then checks behaviour and embedded assets on a desktop-sized page.
 //   npm install && npx playwright install chromium && npm test
 import { chromium } from "playwright";
-import { mkdtempSync, mkdirSync, copyFileSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, copyFileSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -199,6 +199,48 @@ async function enterMachine(p, name = "Pat") {
   check(boxes.length === 6 && boxes.every((b) => b.b <= 780 && b.t >= 0), `cards were not laid out for the full screen (${boxes.length} cards)`);
   check(errors.length === 0, `page errors: ${errors.join("; ")}`);
   await mctx.close();
+}
+
+// After Dark mode: the start card asks the 18+ question, the reveal draws from the cheeky pools
+// with a bio line, and the HUD button flips back to Classic.
+{
+  const p = await ctx.newPage();
+  await p.setViewportSize({ width: 1280, height: 800 });
+  const errors = [];
+  p.on("pageerror", (e) => errors.push(e.message));
+  await p.goto(page_url);
+  await p.click("#pressStart");
+  await p.waitForSelector("#startForm:not([hidden])", { timeout: 2000 });
+  await p.click("#modeDark");
+  check(await p.isVisible("#ageGate") && await p.evaluate(() => document.body.dataset.mode === "classic"), "After Dark switched on without the 18+ question");
+  await p.click("#ageNo");
+  check(await p.evaluate(() => document.body.dataset.mode === "classic" && document.getElementById("ageGate").hidden && /Classic/.test(document.getElementById("startErr").textContent)), "answering no did not keep Classic");
+  await p.click("#modeDark");
+  await p.click("#ageYes");
+  check(await p.evaluate(() => document.body.dataset.mode === "dark" && !document.getElementById("startBadge").hidden && document.getElementById("modeDark").getAttribute("aria-pressed") === "true"), "After Dark did not switch on");
+  await p.fill("#nameInput", "Kim");
+  await p.press("#nameInput", "Enter");
+  await p.waitForSelector("#createBtn.show", { timeout: 12000 });
+  await p.click("#createBtn");
+  await p.waitForSelector("#reveal:not([hidden])", { timeout: 15000 });
+  const rv = await p.evaluate(() => ({
+    name: document.getElementById("rvName").textContent, animal: document.getElementById("rvAnimal").textContent,
+    href: document.getElementById("rvAnimal").href, bio: document.getElementById("rvBio").textContent,
+    bioHidden: document.getElementById("rvBio").hidden, tag: document.getElementById("rvTag").textContent,
+    hudBtn: document.getElementById("modeBtn").textContent,
+  }));
+  const src = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const pool = (name) => JSON.parse(new RegExp(`const ${name} = (\\[[^\\n]*\\]);`).exec(src)[1]);
+  const darkNames = pool("NAMES_DARK"), darkAnimals = pool("ANIMALS_DARK"), bios = pool("BIOS_DARK");
+  console.log(`after dark: ${rv.name} the ${rv.animal}; "${rv.bio}" (${darkNames.length} names, ${darkAnimals.length} species, ${bios.length} bios)`);
+  check(darkNames.includes(rv.name) && darkAnimals.includes(rv.animal), `reveal "${rv.name} the ${rv.animal}" is not from the After Dark pools`);
+  check(!rv.bioHidden && bios.includes(rv.bio), "After Dark reveal has no bio line");
+  check(rv.tag.startsWith("AFTER DARK") && rv.hudBtn === "AFTER DARK: ON", `reveal tag "${rv.tag}", HUD button "${rv.hudBtn}"`);
+  check(rv.href.startsWith("https://en.wikipedia.org/wiki/"), `species link is ${rv.href}`);
+  await p.click("#modeBtn");
+  check(await p.evaluate(() => document.body.dataset.mode === "classic" && document.getElementById("rvTag").textContent.startsWith("ORIGINAL CHARACTER")), "HUD button did not flip back to Classic");
+  check(errors.length === 0, `page errors in After Dark: ${errors.join("; ")}`);
+  await p.close();
 }
 
 // Embedded assets: run the embed tool on a scratch copy and check the page uses them.
