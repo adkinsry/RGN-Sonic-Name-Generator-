@@ -452,6 +452,83 @@ body[data-freak] .hud dt, body[data-freak] .hud dd { color: #FFFFFF; }
   .hero-bg.show { animation: none; opacity: .22; }
   .fan-card.hero.away { animation: none; visibility: hidden; }
 }
+
+/* ================= 16-bit theme =================
+   Everything below overrides the base look: one pixel font, flat colours with hard-edged shadows,
+   a banded sky, square corners, a pixelation filter on the backdrop and the fan art, chunky ring
+   effects and faint scanlines. It is a layer on top so it is easy to compare and to take out. */
+:root { --display: "Press Start 2P", "Courier New", monospace; --px: 4px; --reel-fit: 0.92; }
+*, *::before, *::after { border-radius: 0 !important; }
+body {
+  background: linear-gradient(
+    var(--sky-top) 0 16%, color-mix(in srgb, var(--sky-top) 55%, var(--sky-mid)) 16% 32%,
+    var(--sky-mid) 32% 50%, color-mix(in srgb, var(--sky-mid) 50%, var(--sky-low)) 50% 66%,
+    var(--sky-low) 66%);
+}
+.zone { filter: url(#pixelate); }
+.scanlines {
+  position: fixed; inset: 0; z-index: 60; pointer-events: none;
+  background: repeating-linear-gradient(rgba(0, 0, 0, 0) 0 2px, rgba(0, 0, 0, .13) 2px 3px);
+}
+#fx { image-rendering: pixelated; }
+
+/* Pixel type: no outlines (they smear the glyphs), hard offset shadows only. */
+.row, .the, .go, .side, .mode-btn, .start-title, .start-input, .start-err, .intro-text, .rv-line, .rv-the, .rv-bio, .freak-text, .fan-card figcaption {
+  -webkit-text-stroke: 0; font-family: var(--display); font-weight: 400;
+}
+.row { font-size: clamp(9px, 2.2vw, 15px); text-shadow: 2px 2px 0 var(--navy-deep); letter-spacing: 0; padding-inline: 6px; }
+.row span { max-width: 100%; overflow: hidden; text-overflow: clip; }
+.reel { filter: none !important; } /* no motion blur: a Genesis never had one */
+.row.c0 { background: var(--red); } .row.c1 { background: var(--blue); } .row.c2 { background: #F2B705; }
+.row { border-block: 2px solid rgba(0, 0, 0, .35); }
+.reel { border: var(--px) solid var(--navy-deep); perspective: none; }
+.reel::after { background: linear-gradient(rgba(6, 18, 58, .7) 0 20%, rgba(6, 18, 58, 0) 20% 80%, rgba(6, 18, 58, .7) 80%); }
+.window { border: var(--px) solid var(--gold); box-shadow: 0 0 0 2px var(--navy-deep); }
+.the { font-size: 18px; text-shadow: 3px 3px 0 var(--navy-deep); }
+.machine { background: var(--navy); border: var(--px) solid var(--gold); box-shadow: 6px 6px 0 var(--gold-dark); }
+.bulbs i { border-radius: 0 !important; width: 6px; height: 6px; }
+.go {
+  font-size: 14px; letter-spacing: 0; line-height: 1.4; padding: 14px 26px;
+  background: var(--red); border: var(--px) solid var(--navy-deep);
+  box-shadow: 6px 6px 0 var(--navy-deep); text-shadow: 3px 3px 0 var(--navy-deep);
+}
+.go:active:not(:disabled) { transform: translate(4px, 4px); box-shadow: 2px 2px 0 var(--navy-deep); }
+body[data-mode="dark"] .go { background: var(--red); box-shadow: 6px 6px 0 var(--navy-deep); }
+body[data-mode="dark"] .go:active:not(:disabled) { box-shadow: 2px 2px 0 var(--navy-deep); }
+.press-start { font-size: clamp(14px, 4vw, 22px); padding: 18px 30px; animation: pulse 1.2s steps(2) infinite; }
+@keyframes pulse { 50% { filter: brightness(1.2); } }
+.side, .mode-btn { font-size: 9px; line-height: 1.4; padding: 11px 14px; }
+.side { border: 3px solid var(--navy-deep); box-shadow: 4px 4px 0 var(--navy-deep); }
+.side:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--navy-deep); }
+.mute { border-width: 3px; box-shadow: 3px 3px 0 var(--navy-deep); }
+.start-card { background: var(--navy); border: var(--px) solid var(--gold); box-shadow: 6px 6px 0 var(--gold-dark); }
+.start-title { font-size: clamp(14px, 4.4vw, 24px); line-height: 1.4; transform: none; text-shadow: 3px 3px 0 var(--navy-deep); }
+.start-input { font-size: 14px; border: 3px solid var(--navy-deep); padding: 12px; }
+.start-err { font-size: 8px; line-height: 1.6; }
+.mode-switch { border-width: 3px; }
+.age-gate { border: 3px dashed var(--pink); }
+.intro-text { font-size: clamp(11px, min(2.8vw, 3.6vh), 20px); line-height: 1.6; text-shadow: 3px 3px 0 var(--navy-deep); }
+.intro-text .l2 { font-size: .8em; }
+.fan-card { border: 3px solid var(--navy-deep); box-shadow: 5px 5px 0 rgba(6, 18, 58, .6); }
+.fan-card img, .fan-card svg { image-rendering: pixelated; filter: url(#pixelate); }
+.fan-card figcaption { font-size: clamp(6px, 1vw, 8px); line-height: 1.5; }
+.fan-card .credit { font-size: .9em; }
+.hero-bg { image-rendering: pixelated; filter: url(#pixelate); }
+.scrim { background: rgba(6, 18, 58, .78); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.rays { animation: spinrays 14s steps(28) infinite, fadein .5s steps(4) both; }
+.flash { animation: flash .4s steps(3) both; }
+.rv-line { font-size: clamp(22px, 6vw, 64px); line-height: 1.25; text-shadow: 5px 5px 0 var(--navy-deep); }
+.rv-name { animation: slamL .5s steps(8) both; }
+.rv-animal { animation: slamR .5s .18s steps(8) both; }
+.rv-the { font-size: clamp(12px, 2.4vw, 22px); animation: pop .3s .1s steps(4) both; }
+.rv-bio { font-size: clamp(8px, 1.6vw, 12px); line-height: 1.7; }
+.rv-tag { border: 2px solid var(--gold); }
+.freak-text { font-size: clamp(26px, 8vw, 64px); line-height: 1.3; text-shadow: 6px 6px 0 #3A0008; }
+.card { gap: 8px; }
+@keyframes slamL { from { transform: translateX(-120vw); } to { transform: translateX(0); } }
+@keyframes slamR { from { transform: translateX(120vw); } to { transform: translateX(0); } }
+.start-card.in { animation: pop .4s steps(5) both; }
+@media (prefers-reduced-motion: reduce) { .press-start { animation: none; } }
 </style>
 </head>
 <body data-stage="start">
@@ -588,9 +665,17 @@ body[data-freak] .hud dt, body[data-freak] .hud dd { color: #FFFFFF; }
   </div>
 </div>
 <canvas id="fx" aria-hidden="true"></canvas>
+<div class="scanlines" aria-hidden="true"></div>
 <p class="sr" id="announce" aria-live="polite"></p>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="pixelate" x="0" y="0"><!-- 4px blocks: sample one pixel per tile and dilate it back out -->
+    <feFlood x="2" y="2" height="1" width="1"/>
+    <feComposite width="4" height="4"/>
+    <feTile result="tiles"/>
+    <feComposite in="SourceGraphic" in2="tiles" operator="in"/>
+    <feMorphology operator="dilate" radius="2"/>
+  </filter>
   <filter id="blurName"><feGaussianBlur id="blurNameDev" stdDeviation="0 0"/></filter>
   <filter id="blurAnimal"><feGaussianBlur id="blurAnimalDev" stdDeviation="0 0"/></filter>
 </svg>
@@ -879,6 +964,9 @@ function sfx(cue, pan = 0) {
 const SLOT_DEG = 22, SLOT_RAD = SLOT_DEG * Math.PI / 180;
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+// Pixels of width per pixel of font size, inverted: a wide font (every glyph 1 em) needs a small
+// factor so long words shrink to fit the window. Set from CSS so a theme can swap the font.
+const REEL_FIT = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--reel-fit")) || 1.7;
 function makeReel(el, flipEl, blurDev, blurId, source, pan) {
   const rows = [];
   for (let j = 0; j < 9; j++) {
@@ -952,7 +1040,7 @@ function makeReel(el, flipEl, blurDev, blurId, source, pan) {
           row.el.className = "row c" + mod(idx, 3);
           const w = el.clientWidth - 24;
           const base = Math.min(reel.rowH * 0.56, 30);
-          row.el.style.fontSize = Math.min(base, (w / Math.max(4, text.length)) * 1.7) + "px";
+          row.el.style.fontSize = Math.min(base, (w / Math.max(4, text.length)) * REEL_FIT) + "px";
         }
         const y = reduceMotion ? (k - frac) * reel.rowH : R * Math.sin(ang);
         const rx = reduceMotion ? 0 : -(ang * 180 / Math.PI);
@@ -983,7 +1071,7 @@ const fx = document.getElementById("fx");
 const ctx = fx.getContext("2d");
 let W = 0, H = 0, DPR = 1;
 function resize() {
-  DPR = Math.min(2, window.devicePixelRatio || 1);
+  DPR = 0.5; // the FX canvas renders at half size and scales up without smoothing: chunky rings
   W = window.innerWidth; H = window.innerHeight;
   fx.width = Math.round(W * DPR); fx.height = Math.round(H * DPR);
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
