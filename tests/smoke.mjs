@@ -175,6 +175,8 @@ async function enterMachine(p, name = "Pat") {
   await p.goto(page_url);
   check(await p.evaluate(() => matchMedia("(hover: none)").matches), "mobile emulation does not report hover: none");
   await p.tap("#pressStart");
+  await p.waitForSelector("#nameInput:not([hidden])");
+  check(await p.evaluate(() => document.activeElement !== document.getElementById("nameInput")), "name box was auto-focused on a touch device (that opens the keyboard over the card)");
   await p.fill("#nameInput", "Sam");
   const t0 = Date.now();
   await p.press("#nameInput", "Enter");

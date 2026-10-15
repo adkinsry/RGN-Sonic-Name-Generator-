@@ -12,7 +12,7 @@ The whole app is one self-contained file, `index.html` (~160 KB before you add y
 
 ## What it does
 
-1. **Start screen:** tap **Press Start**, then type your name and press Enter (or **Let's Go!**). Phones play no sound until something is tapped, so Press Start is where the opening sound begins.
+1. **Start screen:** tap **Press Start**, then type your name and press Enter (or **Let's Go!**). Phones play no sound until something is tapped, so Press Start is where sound is unlocked (with a click); the opening theme starts when the name goes in.
 2. **Intro:** "Hey (Name), let's see your best Sonic fan art! Are you ready to meet your character?" types itself out while up to six fan-art cards spin out of the centre one at a time, growing, and land in free spots around the text; the next one leaves as the last one lands. It takes about 6.5 s; Enter, Space or a tap skips to the end. On short landscape phones only four cards fit.
 3. **Create My Character** appears. Pressing it spins both reels for about 5 seconds, Price-is-Right style. The name reel stops at 4.3 s and the species reel at 5.0 s.
 4. After 1.5 s of stillness, the name slams in with a ring burst, a ring chime, an act-clear fanfare, and pixel critters that hop around for about 10 s and then leave. Once everything settles the page stops animating, so it doesn't drain a phone battery while it sits open.
@@ -56,12 +56,12 @@ Put a file named after its cue in `assets/sounds/` (MP3, WAV, OGG or M4A), for e
 
 | Cue | Plays when | Matched to |
 |---|---|---|
-| `start` | Press Start is pressed (and on Enter, if it has already ended) | −22 dBFS |
+| `start` | the name is entered (Enter or **Let's Go!**) | −22 dBFS |
 | `type` | every other letter of the greeting types out | −34 dBFS |
 | `whoosh` | each fan-art card launches | −28 dBFS |
 | `land` | each card lands | −28 dBFS |
 | `ready` | Create My Character appears | −20 dBFS |
-| `press` | Create My Character is pressed | −24 dBFS |
+| `press` | Press Start and Create My Character are pressed | −24 dBFS |
 | `tick` | each item passes on the wheel | −27 dBFS |
 | `reelStop` | each reel stops | −26 dBFS |
 | `ring` | the ring burst on the reveal (7 times) | −26 dBFS |
