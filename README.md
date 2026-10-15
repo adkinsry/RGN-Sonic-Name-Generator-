@@ -27,11 +27,11 @@ The backdrop is an original drawing in the spirit of a 16-bit "green hill" stage
 A party setting. On the name card, tap **After Dark 18+**; it asks (with a straight face) whether you are 18, and **...no** keeps Classic. The HUD button **AFTER DARK: ON/OFF** flips it at any time, including between spins. In After Dark:
 
 - The sky goes night-purple and the buttons go pink.
-- Names come from a romance-novel pool (Candy, Fabio, Hot Rod...).
+- Names are prank names and worse (Hugh Jass, Mike Hunt, Dixie Normous, Dr. Spin Dash...).
 - Every species is still a real animal; they are just the ones with unfortunate names (Booby, Great Tit, Slippery Dick, Sexy Shrimp...). The Wikipedia link still works, which is the joke. The 79 After Dark titles were checked against the MediaWiki API on 2026-10-15 (all but three, which only hit rate limits: Beaver, Booby and Cockatoo, whose articles are plainly named).
-- The reveal adds a one-line bio ("Banned from Casino Night Zone. Twice.") and a different tag line. The bio is included when you share, not when you copy the name.
+- The reveal adds a one-line bio ("Gotta go fast. In bed. Unfortunately.") and the tag line becomes "18+ · DO NOT STEAL · DO NOT EXPLAIN TO YOUR KIDS". The bio is included when you share, not when you copy the name.
 
-It is innuendo, not explicit: nothing on screen is stronger than a bachelorette-party card game.
+It is crude and knows it: sex jokes, prank names and bios that admit they were generated for a party. Nothing targets a real person, and the canon Sonic cast is kept out of the dirty jokes.
 
 ## Fan art for the intro
 

@@ -235,7 +235,7 @@ async function enterMachine(p, name = "Pat") {
   console.log(`after dark: ${rv.name} the ${rv.animal}; "${rv.bio}" (${darkNames.length} names, ${darkAnimals.length} species, ${bios.length} bios)`);
   check(darkNames.includes(rv.name) && darkAnimals.includes(rv.animal), `reveal "${rv.name} the ${rv.animal}" is not from the After Dark pools`);
   check(!rv.bioHidden && bios.includes(rv.bio), "After Dark reveal has no bio line");
-  check(rv.tag.startsWith("AFTER DARK") && rv.hudBtn === "AFTER DARK: ON", `reveal tag "${rv.tag}", HUD button "${rv.hudBtn}"`);
+  check(rv.tag.startsWith("18+") && rv.hudBtn === "AFTER DARK: ON", `reveal tag "${rv.tag}", HUD button "${rv.hudBtn}"`);
   check(rv.href.startsWith("https://en.wikipedia.org/wiki/"), `species link is ${rv.href}`);
   await p.click("#modeBtn");
   check(await p.evaluate(() => document.body.dataset.mode === "classic" && document.getElementById("rvTag").textContent.startsWith("ORIGINAL CHARACTER")), "HUD button did not flip back to Classic");
