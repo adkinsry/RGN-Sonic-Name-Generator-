@@ -12,7 +12,7 @@ import { extname, basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 const root = process.argv[2] || fileURLToPath(new URL("..", import.meta.url));
 const htmlPath = join(root, "index.html");
-const CUES = ["start", "type", "whoosh", "land", "ready", "press", "tick", "reelStop", "ring", "jingle"];
+const CUES = ["start", "type", "whoosh", "land", "ready", "press", "tick", "reelStop", "ring", "jingle", "freak"];
 const SOUND_TYPES = { ".mp3": "audio/mpeg", ".wav": "audio/wav", ".ogg": "audio/ogg", ".m4a": "audio/mp4" };
 const IMAGE_TYPES = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif" };
 const WARN_BYTES = 400 * 1024;

@@ -243,6 +243,49 @@ async function enterMachine(p, name = "Pat") {
   await p.close();
 }
 
+// Freak spin: ?freak forces it. The alarm shows first, then the reels run on the gross pools, the
+// reveal is tagged, the rings are gone, and the next spin is normal again.
+{
+  const p = await ctx.newPage();
+  await p.setViewportSize({ width: 1280, height: 800 });
+  const errors = [];
+  p.on("pageerror", (e) => errors.push(e.message));
+  await p.goto(page_url + "?freak");
+  await p.click("#pressStart");
+  await p.fill("#nameInput", "Lee");
+  await p.press("#nameInput", "Enter");
+  await p.waitForSelector("#createBtn.show", { timeout: 12000 });
+  await p.click("#createBtn");
+  await p.waitForSelector("#freakWarn:not([hidden])", { timeout: 2000 }).catch(() => {});
+  const warn = await p.evaluate(() => ({
+    shown: !document.getElementById("freakWarn").hidden, red: document.body.dataset.freak === "1",
+    goOff: document.getElementById("go").disabled, reelsStill: !document.querySelector(".machine.live"),
+  }));
+  check(warn.shown && warn.red && warn.goOff && warn.reelsStill, `freak warning: ${JSON.stringify(warn)}`);
+  await p.waitForFunction(() => document.getElementById("freakWarn").hidden, null, { timeout: 5000 });
+  check(await p.evaluate(() => !!document.querySelector(".machine.live")), "reels did not start after the freak warning");
+  await p.waitForSelector("#reveal:not([hidden])", { timeout: 15000 });
+  const rv = await p.evaluate(() => ({
+    name: document.getElementById("rvName").textContent, animal: document.getElementById("rvAnimal").textContent,
+    bio: document.getElementById("rvBio").textContent, tag: document.getElementById("rvTag").textContent,
+    rings: document.getElementById("hudRings").textContent, score: document.getElementById("hudScore").textContent,
+    red: document.body.dataset.freak === "1", href: document.getElementById("rvAnimal").href,
+  }));
+  const src = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const pool = (name) => JSON.parse(new RegExp(`const ${name} = (\\[[^\\n]*\\]);`).exec(src)[1]);
+  console.log(`freak: ${rv.name} the ${rv.animal}; "${rv.bio}"; rings ${rv.rings}, score ${rv.score}`);
+  check(pool("NAMES_GROSS").includes(rv.name) && pool("ANIMALS_GROSS").includes(rv.animal), `freak reveal "${rv.name} the ${rv.animal}" is not from the gross pools`);
+  check(pool("BIOS_GROSS").includes(rv.bio) && rv.tag.startsWith("FREAK") && rv.red, `freak reveal bio "${rv.bio}", tag "${rv.tag}", red ${rv.red}`);
+  check(rv.rings === "0" && rv.score === "666", `freak should take the rings and give 666 points, got rings ${rv.rings}, score ${rv.score}`);
+  check(rv.href.startsWith("https://en.wikipedia.org/wiki/"), `species link is ${rv.href}`);
+  await p.click("#go");
+  await p.waitForTimeout(300);
+  const again = await p.evaluate(() => ({ red: document.body.dataset.freak === "1", warn: !document.getElementById("freakWarn").hidden, live: !!document.querySelector(".machine.live") }));
+  check(!again.red && !again.warn && again.live, `the spin after a freak should be normal: ${JSON.stringify(again)}`);
+  check(errors.length === 0, `page errors in the freak spin: ${errors.join("; ")}`);
+  await p.close();
+}
+
 // Embedded assets: run the embed tool on a scratch copy and check the page uses them.
 {
   const dir = mkdtempSync(join(tmpdir(), "ocgen-"));

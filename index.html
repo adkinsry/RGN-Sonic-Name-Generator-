@@ -328,6 +328,36 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
 @keyframes shake { 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); } }
 @keyframes fadeout { to { opacity: 0; } }
 
+/* ---------- Freak spin (1 in 100): alarm stripes, then everything gold turns red ---------- */
+.freak-warn {
+  position: fixed; inset: 0; z-index: 38; display: grid; place-items: center; text-align: center;
+  padding: 16px; box-sizing: border-box;
+  background: repeating-linear-gradient(-45deg, #B00020 0 28px, #2A0008 28px 56px);
+  animation: stripes .45s linear infinite;
+}
+.freak-warn::before { content: ""; position: absolute; inset: 0; background: rgba(255, 40, 40, .45); animation: redflash .4s steps(2) infinite; }
+.freak-warn > div { position: relative; display: grid; gap: 14px; justify-items: center; }
+.freak-text {
+  font: 400 clamp(44px, 14vw, 120px)/.95 var(--display); color: #FFFFFF;
+  -webkit-text-stroke: 3px #3A0008; paint-order: stroke fill;
+  text-shadow: 5px 5px 0 #3A0008, 0 0 40px rgba(255, 60, 60, .9);
+  transform: skewX(-8deg); animation: freakshake .12s linear infinite;
+}
+.freak-sub { margin: 0; font: clamp(10px, 2.4vw, 14px)/1.8 var(--hud); color: #FFD5D5; text-shadow: 2px 2px 0 #3A0008; letter-spacing: .06em; }
+@keyframes stripes { to { background-position: 79px 0; } }
+@keyframes redflash { 50% { opacity: 0; } }
+@keyframes freakshake { 25% { transform: skewX(-8deg) translate(-4px, 2px); } 75% { transform: skewX(-8deg) translate(4px, -2px); } }
+body[data-freak] {
+  --sky-top: #3A0008; --sky-mid: #B00020; --sky-low: #FF7A7A;
+  --grass: #5A1A1A; --dirt-a: #7A2020; --dirt-b: #3A0A0A;
+  --navy: #3A0008; --navy-deep: #1E0004;
+  --gold: #FF5A5A; --gold-dark: #8E0E12; --pink: #FF5A5A;
+}
+body[data-freak] .scrim { background: radial-gradient(ellipse at 50% 45%, rgba(90, 0, 12, .6), rgba(40, 0, 6, .88)); }
+body[data-freak] .rays { background: repeating-conic-gradient(rgba(255, 70, 70, .6) 0 7deg, rgba(255, 70, 70, 0) 7deg 18deg); }
+body[data-freak] .rv-tag { background: #B00020; color: #FFFFFF; }
+body[data-freak] .hud dt, body[data-freak] .hud dd { color: #FFFFFF; }
+
 /* ---------- Reveal ---------- */
 .reveal {
   position: fixed; inset: 0; z-index: 20;
@@ -418,6 +448,7 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
   .start-card.shake { animation: none; }
   .start-card.in { animation: none; }
   .press-start { animation: none; }
+  .freak-warn, .freak-warn::before, .freak-text { animation: none; }
   .hero-bg.show { animation: none; opacity: .22; }
   .fan-card.hero.away { animation: none; visibility: hidden; }
 }
@@ -550,6 +581,12 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
     <div class="rv-hint" id="rvHint">tap the species for a photo + Wikipedia</div>
   </div>
 </div>
+<div class="freak-warn" id="freakWarn" hidden>
+  <div>
+    <div class="freak-text">FREAK<br>INCOMING</div>
+    <p class="freak-sub">1 IN 100 · HOLD ON TO YOUR RINGS</p>
+  </div>
+</div>
 <canvas id="fx" aria-hidden="true"></canvas>
 <p class="sr" id="announce" aria-live="polite"></p>
 
@@ -593,6 +630,8 @@ const BIOS_DARK = ["Gotta go fast. In bed. Unfortunately.", "Fastest thing alive
 // Every one of the 410 slugs was checked against the MediaWiki API on 2026-09-30:
 // 0 missing, 0 disambiguation pages.
 const WIKI = {"Fisher": "Fisher (animal)","Mara": "Mara (mammal)","Genet": "Genet (animal)","Fossa": "Fossa (animal)","Kiwi": "Kiwi (bird)","Drill": "Drill (animal)","Skimmer": "Skimmer (bird)","Beluga": "Beluga whale","Argonaut": "Argonaut (animal)","Basilisk": "Basiliscus (lizard)","Sunfish": "Ocean sunfish","Turkey": "Turkey (bird)","Chihuahua": "Chihuahua (dog)","Cow": "Cattle","Corgi": "Welsh Corgi","Mammoth": "Mammoth","Boto": "Amazon river dolphin","Painted Dog": "African wild dog","Dumbo Octopus": "Grimpoteuthis","Sea Pig": "Scotoplanes","Stick Insect": "Phasmatodea","Velvet Worm": "Onychophora","Pistol Shrimp": "Alpheidae","Pufferfish": "Tetraodontidae","Bushbaby": "Galago","Zorilla": "Striped polecat","Tree Kangaroo": "Tree-kangaroo","Secretary Bird": "Secretarybird","Takahe": "Takahē","Kakapo": "Kākāpō","Saiga": "Saiga antelope","Goliath Grouper": "Atlantic goliath grouper","Napoleon Wrasse": "Humphead wrasse","Water Deer": "Water deer","Mudpuppy": "Necturus","Frilled Lizard": "Chlamydosaurus","Blobfish": "Psychrolutes marcidus","Bongo": "Bongo (antelope)","Jacana": "Jacanidae","Leaf-tailed Gecko": "Uroplatus","Vine Snake": "Ahaetulla","Bushmaster": "Lachesis (genus)","Sidewinder": "Crotalus cerastes","Glass Catfish": "Kryptopterus vitreolus","Candiru": "Candiru (fish)","Mandarinfish": "Synchiropus splendidus","Icefish": "Channichthyidae","Hatchetfish": "Marine hatchetfish"};
+// Freak species whose article has a different title (checked on 2026-10-15).
+Object.assign(WIKI, {"Blobfish": "Psychrolutes marcidus", "Sea Pig": "Scotoplanes", "Candiru": "Vandellia cirrhosa", "Blowfly": "Calliphoridae", "Horsefly": "Tabanidae", "Chinese Crested Dog": "Chinese Crested Dog", "Velvet Worm": "Onychophora"});
 // After Dark species whose article has a different title (checked against the MediaWiki API on 2026-10-15).
 Object.assign(WIKI, {"Shag": "European shag", "Bearded Tit": "Bearded reedling", "Cockle": "Cockle (bivalve)", "Hairy-nosed Wombat": "Southern hairy-nosed wombat", "Horny Toad": "Horned lizard", "Ruff": "Ruff (bird)", "Sexy Shrimp": "Thor amboinensis", "Spiny Lumpsucker": "Pacific spiny lumpsucker", "Peacock": "Peafowl", "Boobook": "Australian boobook", "Goldeneye": "Common goldeneye", "Wild Ass": "African wild ass", "Goatsucker": "Nightjar", "Jackass Penguin": "African penguin", "Hooker's Sea Lion": "New Zealand sea lion", "Dumbo Octopus": "Grimpoteuthis", "Lesser Spotted Dogfish": "Small-spotted catshark"});
 const wikiUrl = (name) => "https://en.wikipedia.org/wiki/" + encodeURIComponent((WIKI[name] || (name[0].toUpperCase() + name.slice(1).toLowerCase())).replace(/ /g, "_"));
@@ -600,8 +639,15 @@ const wikiUrl = (name) => "https://en.wikipedia.org/wiki/" + encodeURIComponent(
 
 const rand = (n) => Math.floor(Math.random() * n);
 const pickFrom = (a) => a[rand(a.length)];
-const randomName = () => (mode === "dark" ? pickFrom(NAMES_DARK) : pickFrom(NAME_POOLS[rand(NAME_POOLS.length)]));
-const randomAnimal = () => (mode === "dark" ? pickFrom(ANIMALS_DARK) : pickFrom(Math.random() < COMMON_SHARE ? ANIMALS_COMMON : ANIMALS_ODD));
+// The freak spin: 1 in 100, in either mode. A gross name, a gross (real) animal, red everything.
+const FREAK_ODDS = 100;
+let freakSpin = false; // true while the reels are filled from the gross pools
+let forceFreak = new URLSearchParams(location.search).has("freak"); // ?freak forces the next spin, for showing it off
+const NAMES_GROSS = ["Pus", "Phlegm", "Mucus", "Scab", "Crust", "Moist", "Boil", "Wart", "Loogie", "Booger", "Dingleberry", "Skidmark", "Toe Jam", "Earwax", "Dandruff", "Plaque", "Gingivitis", "Pinkeye", "Ringworm", "Fungus", "Chunky", "Leaky", "Oozy", "Crusty", "Sticky", "Stinky", "Swampy", "Rancid", "Curdled", "Lukewarm", "Gooch", "Discharge", "Smegma", "Bile", "Gristle", "Lint", "Sweaty Pete", "Greasy Gus", "Damp Dave", "Crusty Carl", "Musty Mike", "Clammy Kevin", "Soggy Steve", "Ingrown Ian", "Gassy Gary", "Moist Melvin", "Flaky Fiona", "Scabby Abby", "Mucus Marvin", "Bile Brenda", "Phlegmy Phil", "Chunky Chad", "Rashy Rhonda", "Weepy Wendy", "Blister Barb", "Pus-Pocket Paul", "Hairball Harold", "Backwash Becky", "Unwashed Wayne", "Yeasty Yvonne"];
+const ANIMALS_GROSS = ["Blobfish", "Hagfish", "Naked Mole-rat", "Sea Pig", "Botfly", "Tapeworm", "Leech", "Tick", "Bed Bug", "Dung Beetle", "Maggot", "Slug", "Lamprey", "Horsehair Worm", "Tongue-eating Louse", "Aye-aye", "Star-nosed Mole", "Surinam Toad", "Vulture", "Marabou Stork", "Sphynx Cat", "Cockroach", "Giant Isopod", "Candiru", "Hookworm", "Crab Louse", "Head Louse", "Goblin Shark", "Monkfish", "Velvet Worm", "Hellbender", "Bobbit Worm", "Proboscis Monkey", "Wrinkle-faced Bat", "Chinese Crested Dog", "Turkey Vulture", "Hyena", "Frilled Shark", "Stink Bug", "Bombardier Beetle", "Vampire Bat", "Pacu", "Ratfish", "Earwig", "Silverfish", "Mosquito", "Horsefly", "Screwworm", "Liver Fluke", "Guinea Worm", "Sea Lamprey", "Human Botfly", "Blob Sculpin", "Warthog", "Mudskipper", "Lungfish", "Dust Mite", "Eyelash Mite", "Flea", "Housefly", "Blowfly", "Sea Louse", "Fish Louse", "Ribbon Worm", "Hammerhead Worm"];
+const BIOS_GROSS = ["The 1 in 100. Congratulations, we guess.", "Smells exactly like it sounds.", "Do not touch. Do not look. Do not Google.", "Wikipedia has pictures. Please don't.", "Generated under protest.", "Took all your rings on the way in.", "Has a rash. The rash has a rash.", "Something is leaking and nobody will say what.", "Every zone has one. This is yours now.", "Comes with a smell. The smell is free.", "Not an original character. A condition.", "Lives in the drain of the Chemical Plant.", "Was the 'before' photo.", "Health inspector closed the whole zone.", "Dr. Robotnik tried to build one of these and quit."];
+const randomName = () => (freakSpin ? pickFrom(NAMES_GROSS) : mode === "dark" ? pickFrom(NAMES_DARK) : pickFrom(NAME_POOLS[rand(NAME_POOLS.length)]));
+const randomAnimal = () => (freakSpin ? pickFrom(ANIMALS_GROSS) : mode === "dark" ? pickFrom(ANIMALS_DARK) : pickFrom(Math.random() < COMMON_SHARE ? ANIMALS_COMMON : ANIMALS_ODD));
 
 /* ================= Timing (ms) ================= */
 const NAME_SPIN_MS = 4300;   // name reel stops first
@@ -609,6 +655,7 @@ const ANIMAL_SPIN_MS = 5000; // the whole spin is ~5 s
 const NAME_ITEMS = 52;       // how many entries blip past
 const ANIMAL_ITEMS = 64;
 const HOLD_MS = 1500;        // both reels stationary before the reveal
+const FREAK_WARN_MS = 2600;  // "FREAK INCOMING" before a freak spin starts
 
 /* ================= Embedded assets ================= */
 // Written by `npm run embed-assets` from assets/sounds/ and assets/fanart/. Keep the two markers:
@@ -628,6 +675,7 @@ const SFX_DB = {
   reelStop: -26, // a reel stops
   ring: -26,     // ring burst on the reveal
   jingle: -18,   // act-clear fanfare on the reveal
+  freak: -20,    // "FREAK INCOMING" alarm before a freak spin
 };
 const embeddedSfx = {}; // cue -> { buf, gain }, filled once audio starts
 let sfxReady = Promise.resolve();
@@ -817,6 +865,7 @@ const BUILTIN_SFX = {
     .forEach(([n, off, d]) => sweep("square", hz(n), hz(n) * 1.001, d, 0.07, t + off, 0)),
   press: (t, p) => sweep("square", 220, 880, 0.14, 0.08, t, p),
   reelStop: (t, p) => { noise("lowpass", 700, 700, 0.07, 0.9, t, p); sweep("triangle", 160, 90, 0.1, 0.25, t, p); },
+  freak: (t, p) => { for (let i = 0; i < 6; i++) { sweep("square", 880, 660, 0.17, 0.08, t + i * 0.36, p); sweep("square", 660, 440, 0.17, 0.08, t + i * 0.36 + 0.18, p); } },
 };
 // Play one cue: an embedded file if there is one, otherwise the built-in sound.
 function sfx(cue, pan = 0) {
@@ -1064,6 +1113,7 @@ const rvAnimal = document.getElementById("rvAnimal");
 const rvBio = document.getElementById("rvBio");
 const rvTag = document.getElementById("rvTag");
 const rvHint = document.getElementById("rvHint");
+const freakWarn = document.getElementById("freakWarn");
 const announce = document.getElementById("announce");
 const hudScore = document.getElementById("hudScore");
 const hudTime = document.getElementById("hudTime");
@@ -1074,7 +1124,7 @@ const canShare = typeof navigator.share === "function";
 const tapWord = window.matchMedia("(hover: none)").matches ? "tap" : "click";
 
 let stage = "start"; // start | intro | main: which screen is showing
-let phase = "idle"; // idle | spinning | holding | revealed
+let phase = "idle"; // idle | warning | spinning | holding | revealed
 let spinStart = 0, score = 0, ringTotal = 0;
 let result = null;
 
@@ -1087,8 +1137,27 @@ function pickDifferent(fn, avoid) {
 function spin() {
   audio();
   clearReveal();
+  const freak = forceFreak || rand(FREAK_ODDS) === 0;
+  forceFreak = false;
+  if (freak) startFreakWarning(); else launchReels(false);
+}
+// The alarm before a freak spin: red stripes, the "freak" cue, then the reels start on their own.
+function startFreakWarning() {
+  phase = "warning";
+  go.disabled = true;
+  copyBtn.hidden = true; shareBtn.hidden = true;
+  document.body.dataset.freak = "1";
+  freakWarn.hidden = false;
+  sfx("freak");
+  announce.textContent = "Freak incoming";
+  setTimeout(() => { freakWarn.hidden = true; launchReels(true); }, reduceMotion ? 1200 : FREAK_WARN_MS);
+}
+function launchReels(freak) {
+  freakSpin = freak;
+  if (freak) document.body.dataset.freak = "1";
   const now = performance.now();
-  result = { name: pickDifferent(randomName, reelName.current()), animal: pickDifferent(randomAnimal, reelAnimal.current()), bio: mode === "dark" ? pickFrom(BIOS_DARK) : "" };
+  const bio = freak ? pickFrom(BIOS_GROSS) : mode === "dark" ? pickFrom(BIOS_DARK) : "";
+  result = { name: pickDifferent(randomName, reelName.current()), animal: pickDifferent(randomAnimal, reelAnimal.current()), bio, freak };
   reelName.start(result.name, NAME_ITEMS, NAME_SPIN_MS, now);
   reelAnimal.start(result.animal, ANIMAL_ITEMS, ANIMAL_SPIN_MS, now);
   spinStart = now;
@@ -1103,6 +1172,7 @@ function spin() {
 
 function clearReveal() {
   reveal.hidden = true;
+  delete document.body.dataset.freak;
   rings = []; critters = [];
   ctx.clearRect(0, 0, W, H);
 }
@@ -1125,6 +1195,8 @@ function showReveal() {
   rvAnimal.textContent = result.animal;
   rvBio.textContent = result.bio;
   rvBio.hidden = !result.bio;
+  rvTag.textContent = result.freak ? "FREAK · 1 IN 100 · RINGS: GONE" : modeTag();
+  rvHint.textContent = result.freak ? `${tapWord} the species: do not, actually` : modeHint();
   rvAnimal.href = wikiUrl(result.animal);
   rvAnimal.setAttribute("aria-label", `${result.animal}: open its Wikipedia article in a new tab`);
   reveal.hidden = false;
@@ -1137,7 +1209,7 @@ function showReveal() {
   const card = reveal.querySelector(".card").getBoundingClientRect();
   const n = spawnRings(W / 2, card.top + card.height / 2);
   spawnCritters();
-  ringTotal += n; score += 1000;
+  if (result.freak) { ringTotal = 0; score += 666; } else { ringTotal += n; score += 1000; } // a freak is a hit: rings gone
   hudRings.textContent = ringTotal;
   hudScore.textContent = score;
 
@@ -1156,6 +1228,7 @@ function showReveal() {
   copyBtn.hidden = false; copyBtn.textContent = "Copy name"; copyBtn.classList.remove("done");
   shareBtn.hidden = !canShare;
   go.focus({ preventScroll: true });
+  freakSpin = false; // later idle fills come from the normal pools again
   kick();
 }
 
@@ -1226,7 +1299,7 @@ function frame(now) {
 }
 
 go.addEventListener("click", () => {
-  if (phase === "spinning" || phase === "holding") return;
+  if (phase === "warning" || phase === "spinning" || phase === "holding") return;
   spin();
 });
 document.addEventListener("keydown", (e) => {
@@ -1255,6 +1328,8 @@ const modeClassic = document.getElementById("modeClassic");
 const modeDark = document.getElementById("modeDark");
 const ageGate = document.getElementById("ageGate");
 const startBadge = document.getElementById("startBadge");
+const modeTag = () => (mode === "dark" ? "18+ · DO NOT STEAL · DO NOT EXPLAIN TO YOUR KIDS" : "ORIGINAL CHARACTER · DO NOT STEAL");
+const modeHint = () => (mode === "dark" ? `${tapWord} the species: yes, it is real` : `${tapWord} the species for a photo + Wikipedia`);
 function setMode(m) {
   mode = m;
   const dark = m === "dark";
@@ -1265,8 +1340,7 @@ function setMode(m) {
   modeClassic.classList.toggle("on", !dark); modeClassic.setAttribute("aria-pressed", String(!dark));
   modeDark.classList.toggle("on", dark); modeDark.setAttribute("aria-pressed", String(dark));
   startBadge.hidden = !dark;
-  rvTag.textContent = dark ? "18+ · DO NOT STEAL · DO NOT EXPLAIN TO YOUR KIDS" : "ORIGINAL CHARACTER · DO NOT STEAL";
-  rvHint.textContent = dark ? `${tapWord} the species: yes, it is real` : `${tapWord} the species for a photo + Wikipedia`;
+  if (!(result && result.freak && phase === "revealed")) { rvTag.textContent = modeTag(); rvHint.textContent = modeHint(); }
   if (phase === "idle") { reelName.setIdle(); reelAnimal.setIdle(); } // show the new pools in the windows
 }
 // The start card asks the 18+ question once, played straight-faced; the HUD button just flips.

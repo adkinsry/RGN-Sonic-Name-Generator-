@@ -33,6 +33,10 @@ A party setting. On the name card, tap **After Dark 18+**; it asks (with a strai
 
 It is crude and knows it: sex jokes, prank names and bios that admit they were generated for a party. Nothing targets a real person, and the canon Sonic cast is kept out of the dirty jokes.
 
+## The freak spin
+
+One spin in a hundred, in either mode, is a freak: the screen goes to red alarm stripes with **FREAK INCOMING** and the `freak` sound, then the reels run on gross pools (Dingleberry the Tapeworm, Moist Melvin the Blobfish; the animals are real) with everything gold turned red. The reveal adds a bio ("Wikipedia has pictures. Please don't."), gives 666 points instead of 1000, and takes all your rings, because a freak counts as a hit. Open the page with `?freak` on the URL to force the next spin, for showing it off. The 65 freak species were checked against the MediaWiki API on 2026-10-15.
+
 ## Fan art for the intro
 
 The page ships with six placeholder cards: original goofy critters drawn in code, not Sega characters. To show real fan art instead:
@@ -77,6 +81,7 @@ Put a file named after its cue in `assets/sounds/` (MP3, WAV, OGG or M4A), for e
 | `reelStop` | each reel stops | −26 dBFS |
 | `ring` | the ring burst on the reveal (7 times) | −26 dBFS |
 | `jingle` | the act-clear fanfare on the reveal | −18 dBFS |
+| `freak` | the "FREAK INCOMING" alarm before a freak spin (the Sonic time-over sting fits here) | −20 dBFS |
 
 To turn a cue off entirely, add an empty file named `<cue>.silent` (for example `assets/sounds/whoosh.silent`) and run `npm run embed-assets`. Short, dry clips work best for `type`, `tick` and `reelStop`; they play many times in a row. The `ring` cue normally fires seven times for a burst; a ring clip longer than 0.4 s plays once instead.
 
