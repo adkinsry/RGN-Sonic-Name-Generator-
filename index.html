@@ -1454,7 +1454,7 @@ startForm.addEventListener("submit", (e) => {
   }
   startErr.textContent = "";
   audio();
-  sfxReady.then(playStartTheme); // no-op if the first tap already started it
+  sfxReady.then(() => sfx("start")); // the opening theme starts once the name is in
   startEl.hidden = true;
   introEl.hidden = false;
   // On a phone the keyboard is still open here. Closing it resizes the viewport a moment later,
@@ -1501,25 +1501,21 @@ window.addEventListener("resize", () => {
   }, 150);
 });
 // Press Start is the first user gesture, which is the earliest a phone will let audio play. It
-// starts the opening theme and brings in the name card. The hero piece stays hidden until the
-// intro's finale, after every card has landed.
-let startTheme = null; // the playing "start" clip, so Enter does not restart it
-function playStartTheme() {
-  if (startTheme) return;
-  const src = sfx("start");
-  if (src) { startTheme = src; src.onended = () => { startTheme = null; }; }
-}
+// unlocks audio with a short click and brings in the name card; the opening theme waits for the
+// name. The name box is focused only where there is a mouse: on a phone that would open the
+// keyboard over the card before the player has seen it.
+const hasPointer = window.matchMedia("(hover: hover)").matches;
 const pressStart = document.getElementById("pressStart");
 pressStart.addEventListener("click", () => {
   if (stage !== "start" || !startForm.hidden) return;
   audio();
-  sfxReady.then(() => { if (stage === "start") playStartTheme(); });
+  sfxReady.then(() => { if (stage === "start") sfx("press"); });
   pressStart.hidden = true;
   startForm.hidden = false;
   startForm.classList.add("in");
-  nameInput.focus({ preventScroll: true });
+  if (hasPointer) nameInput.focus({ preventScroll: true });
 });
-if (window.matchMedia("(hover: hover)").matches) pressStart.focus({ preventScroll: true });
+if (hasPointer) pressStart.focus({ preventScroll: true });
 
 /* ================= Boot ================= */
 reelName.setIdle(); reelAnimal.setIdle();
