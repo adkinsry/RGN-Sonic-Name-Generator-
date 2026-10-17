@@ -455,8 +455,8 @@ body[data-freak] .hud dt, body[data-freak] .hud dd { color: #FFFFFF; }
 
 /* ================= 16-bit theme =================
    Everything below overrides the base look: one pixel font, flat colours with hard-edged shadows,
-   a banded sky, square corners, a pixelation filter on the backdrop and the fan art, chunky ring
-   effects and faint scanlines. It is a layer on top so it is easy to compare and to take out. */
+   a banded sky, square corners, a pixelation filter on the backdrop, and chunky ring effects.
+   The fan art and the hero flash are left alone: filters hid the drawings and washed out colour. It is a layer on top so it is easy to compare and to take out. */
 :root { --display: "Press Start 2P", "Courier New", monospace; --px: 4px; --reel-fit: 0.92; }
 *, *::before, *::after { border-radius: 0 !important; }
 body {
@@ -466,10 +466,6 @@ body {
     var(--sky-low) 66%);
 }
 .zone { filter: url(#pixelate); }
-.scanlines {
-  position: fixed; inset: 0; z-index: 60; pointer-events: none;
-  background: repeating-linear-gradient(rgba(0, 0, 0, 0) 0 2px, rgba(0, 0, 0, .13) 2px 3px);
-}
 #fx { image-rendering: pixelated; }
 
 /* Pixel type: no outlines (they smear the glyphs), hard offset shadows only. */
@@ -510,10 +506,8 @@ body[data-mode="dark"] .go:active:not(:disabled) { box-shadow: 2px 2px 0 var(--n
 .intro-text { font-size: clamp(11px, min(2.8vw, 3.6vh), 20px); line-height: 1.6; text-shadow: 3px 3px 0 var(--navy-deep); }
 .intro-text .l2 { font-size: .8em; }
 .fan-card { border: 3px solid var(--navy-deep); box-shadow: 5px 5px 0 rgba(6, 18, 58, .6); }
-.fan-card img, .fan-card svg { image-rendering: pixelated; filter: url(#pixelate); }
 .fan-card figcaption { font-size: clamp(6px, 1vw, 8px); line-height: 1.5; }
 .fan-card .credit { font-size: .9em; }
-.hero-bg { image-rendering: pixelated; filter: url(#pixelate); }
 .scrim { background: rgba(6, 18, 58, .78); -webkit-backdrop-filter: none; backdrop-filter: none; }
 .rays { animation: spinrays 14s steps(28) infinite, fadein .5s steps(4) both; }
 .flash { animation: flash .4s steps(3) both; }
@@ -665,7 +659,6 @@ body[data-mode="dark"] .go:active:not(:disabled) { box-shadow: 2px 2px 0 var(--n
   </div>
 </div>
 <canvas id="fx" aria-hidden="true"></canvas>
-<div class="scanlines" aria-hidden="true"></div>
 <p class="sr" id="announce" aria-live="polite"></p>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
