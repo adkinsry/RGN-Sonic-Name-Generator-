@@ -22,6 +22,21 @@ Space bar spins on desktop and Esc closes the result. **SOUND: ON/OFF** mutes ev
 
 The backdrop is an original drawing in the spirit of a 16-bit "green hill" stage: checkered loop, palm trees, water and mountains. No Sega artwork is used.
 
+## After Dark mode
+
+A party setting. On the name card, tap **After Dark 18+**; it asks (with a straight face) whether you are 18, and **...no** keeps Classic. The HUD button **AFTER DARK: ON/OFF** flips it at any time, including between spins. In After Dark:
+
+- The sky goes night-purple and the buttons go pink.
+- Names are prank names and worse (Hugh Jass, Mike Hunt, Dixie Normous, Dr. Spin Dash...).
+- Every species is still a real animal; they are just the ones with unfortunate names (Booby, Great Tit, Slippery Dick, Sexy Shrimp...). The Wikipedia link still works, which is the joke. The 79 After Dark titles were checked against the MediaWiki API on 2026-10-15 (all but three, which only hit rate limits: Beaver, Booby and Cockatoo, whose articles are plainly named).
+- The reveal adds a one-line bio ("Gotta go fast. In bed. Unfortunately.") and the tag line becomes "18+ · DO NOT STEAL · DO NOT EXPLAIN TO YOUR KIDS". The bio is included when you share, not when you copy the name.
+
+It is crude and knows it: sex jokes, prank names and bios that admit they were generated for a party. Nothing targets a real person, and the canon Sonic cast is kept out of the dirty jokes.
+
+## The freak spin
+
+One spin in a hundred, in either mode, is a freak: the screen goes to red alarm stripes with **FREAK INCOMING** and the `freak` sound, then the reels run on gross pools (Dingleberry the Tapeworm, Moist Melvin the Blobfish; the animals are real) with everything gold turned red. The reveal adds a bio ("Wikipedia has pictures. Please don't."), gives 666 points instead of 1000, and takes all your rings, because a freak counts as a hit. Open the page with `?freak` on the URL to force the next spin, for showing it off. The 65 freak species were checked against the MediaWiki API on 2026-10-15.
+
 ## Fan art for the intro
 
 The page ships with six placeholder cards: original goofy critters drawn in code, not Sega characters. To show real fan art instead:
@@ -66,6 +81,7 @@ Put a file named after its cue in `assets/sounds/` (MP3, WAV, OGG or M4A), for e
 | `reelStop` | each reel stops | −26 dBFS |
 | `ring` | the ring burst on the reveal (7 times) | −26 dBFS |
 | `jingle` | the act-clear fanfare on the reveal | −18 dBFS |
+| `freak` | the "FREAK INCOMING" alarm before a freak spin (the Sonic time-over sting fits here) | −20 dBFS |
 
 To turn a cue off entirely, add an empty file named `<cue>.silent` (for example `assets/sounds/whoosh.silent`) and run `npm run embed-assets`. Short, dry clips work best for `type`, `tick` and `reelStop`; they play many times in a row. The `ring` cue normally fires seven times for a burst; a ring clip longer than 0.4 s plays once instead.
 
