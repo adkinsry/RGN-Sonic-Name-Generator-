@@ -226,7 +226,7 @@ async function enterMachine(p, name = "Pat") {
   const rv = await p.evaluate(() => ({
     name: document.getElementById("rvName").textContent, animal: document.getElementById("rvAnimal").textContent,
     href: document.getElementById("rvAnimal").href, bio: document.getElementById("rvBio").textContent,
-    bioHidden: document.getElementById("rvBio").hidden, tag: document.getElementById("rvTag").textContent,
+    bioHidden: document.getElementById("rvBio").hidden, tag: !!document.getElementById("rvTag"),
     hudBtn: document.getElementById("modeBtn").textContent,
   }));
   const src = readFileSync(new URL("../index.html", import.meta.url), "utf8");
@@ -235,10 +235,10 @@ async function enterMachine(p, name = "Pat") {
   console.log(`after dark: ${rv.name} the ${rv.animal}; "${rv.bio}" (${darkNames.length} names, ${darkAnimals.length} species, ${bios.length} bios)`);
   check(darkNames.includes(rv.name) && darkAnimals.includes(rv.animal), `reveal "${rv.name} the ${rv.animal}" is not from the After Dark pools`);
   check(!rv.bioHidden && bios.includes(rv.bio), "After Dark reveal has no bio line");
-  check(rv.tag.startsWith("18+") && rv.hudBtn === "AFTER DARK: ON", `reveal tag "${rv.tag}", HUD button "${rv.hudBtn}"`);
+  check(!rv.tag && rv.hudBtn === "AFTER DARK: ON", `tag line present ${rv.tag}, HUD button "${rv.hudBtn}"`);
   check(rv.href.startsWith("https://en.wikipedia.org/wiki/"), `species link is ${rv.href}`);
   await p.click("#modeBtn");
-  check(await p.evaluate(() => document.body.dataset.mode === "classic" && document.getElementById("rvTag").textContent.startsWith("ORIGINAL CHARACTER")), "HUD button did not flip back to Classic");
+  check(await p.evaluate(() => document.body.dataset.mode === "classic" && document.getElementById("modeBtn").textContent === "AFTER DARK: OFF"), "HUD button did not flip back to Classic");
   check(errors.length === 0, `page errors in After Dark: ${errors.join("; ")}`);
   await p.close();
 }
@@ -267,7 +267,7 @@ async function enterMachine(p, name = "Pat") {
   await p.waitForSelector("#reveal:not([hidden])", { timeout: 15000 });
   const rv = await p.evaluate(() => ({
     name: document.getElementById("rvName").textContent, animal: document.getElementById("rvAnimal").textContent,
-    bio: document.getElementById("rvBio").textContent, tag: document.getElementById("rvTag").textContent,
+    bio: document.getElementById("rvBio").textContent, tag: !!document.getElementById("rvTag"),
     rings: document.getElementById("hudRings").textContent, score: document.getElementById("hudScore").textContent,
     red: document.body.dataset.freak === "1", href: document.getElementById("rvAnimal").href,
   }));
@@ -275,7 +275,7 @@ async function enterMachine(p, name = "Pat") {
   const pool = (name) => JSON.parse(new RegExp(`const ${name} = (\\[[^\\n]*\\]);`).exec(src)[1]);
   console.log(`freak: ${rv.name} the ${rv.animal}; "${rv.bio}"; rings ${rv.rings}, score ${rv.score}`);
   check(pool("NAMES_GROSS").includes(rv.name) && pool("ANIMALS_GROSS").includes(rv.animal), `freak reveal "${rv.name} the ${rv.animal}" is not from the gross pools`);
-  check(pool("BIOS_GROSS").includes(rv.bio) && rv.tag.startsWith("FREAK") && rv.red, `freak reveal bio "${rv.bio}", tag "${rv.tag}", red ${rv.red}`);
+  check(pool("BIOS_GROSS").includes(rv.bio) && !rv.tag && rv.red, `freak reveal bio "${rv.bio}", tag line present ${rv.tag}, red ${rv.red}`);
   check(rv.rings === "0" && rv.score === "666", `freak should take the rings and give 666 points, got rings ${rv.rings}, score ${rv.score}`);
   check(rv.href.startsWith("https://en.wikipedia.org/wiki/"), `species link is ${rv.href}`);
   await p.click("#go");
