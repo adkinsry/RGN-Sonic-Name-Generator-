@@ -760,7 +760,8 @@ const SFX_DB = {
   reelStop: -26, // a reel stops
   ring: -26,     // ring burst on the reveal
   jingle: -18,   // act-clear fanfare on the reveal
-  freak: -20,    // "FREAK INCOMING" alarm before a freak spin
+  freak: -20,    // "FREAK INCOMING" alarm; a long clip (the drowning countdown) runs until the reveal
+  freakReveal: -18, // the freak reveal itself (the death sting), in place of the fanfare and rings
 };
 const embeddedSfx = {}; // cue -> { buf, gain }, filled once audio starts
 let sfxReady = Promise.resolve();
@@ -951,6 +952,7 @@ const BUILTIN_SFX = {
   press: (t, p) => sweep("square", 220, 880, 0.14, 0.08, t, p),
   reelStop: (t, p) => { noise("lowpass", 700, 700, 0.07, 0.9, t, p); sweep("triangle", 160, 90, 0.1, 0.25, t, p); },
   freak: (t, p) => { for (let i = 0; i < 6; i++) { sweep("square", 880, 660, 0.17, 0.08, t + i * 0.36, p); sweep("square", 660, 440, 0.17, 0.08, t + i * 0.36 + 0.18, p); } },
+  freakReveal: (t, p) => { sweep("square", 520, 60, 0.6, 0.12, t, p); noise("lowpass", 900, 200, 0.5, 0.6, t + 0.05, p); },
 };
 // Play one cue: an embedded file if there is one, otherwise the built-in sound.
 function sfx(cue, pan = 0) {
@@ -1230,13 +1232,18 @@ function spin() {
   if (freak) startFreakWarning(); else launchReels(false);
 }
 // The alarm before a freak spin: red stripes, the "freak" cue, then the reels start on their own.
+// A long embedded "freak" clip (the drowning countdown) is the clock: the reveal waits for it to
+// end, then cuts it off with the "freakReveal" sting. The built-in alarm has no such pull.
+let freakSrc = null, freakEndsAt = 0;
 function startFreakWarning() {
   phase = "warning";
   go.disabled = true;
   copyBtn.hidden = true; shareBtn.hidden = true;
   document.body.dataset.freak = "1";
   freakWarn.hidden = false;
-  sfx("freak");
+  freakSrc = sfx("freak") || null;
+  const clip = embeddedSfx.freak;
+  freakEndsAt = clip && clip.buf.duration > 4 ? performance.now() + clip.buf.duration * 1000 : 0;
   announce.textContent = "Freak incoming";
   setTimeout(() => { freakWarn.hidden = true; launchReels(true); }, reduceMotion ? 1200 : FREAK_WARN_MS);
 }
@@ -1301,7 +1308,10 @@ function showReveal() {
   hudRings.textContent = ringTotal;
   hudScore.textContent = score;
 
-  if (ac && !muted) {
+  if (result.freak) {
+    if (freakSrc) { try { freakSrc.stop(); } catch (e) {} freakSrc = null; }
+    sfx("freakReveal");
+  } else if (ac && !muted) {
     const t = ac.currentTime + 0.03;
     jingle(t + 0.12);
     // The built-in chime is a blip, so it fires seven times for a burst. A longer embedded
@@ -1366,7 +1376,9 @@ function frame(now) {
     if (a && b) {
       phase = "holding";
       machine.classList.remove("live");
-      setTimeout(showReveal, HOLD_MS);
+      // A freak spin holds until its countdown clip has nearly run out.
+      const hold = result.freak && freakEndsAt ? Math.max(HOLD_MS, freakEndsAt - now - 120) : HOLD_MS;
+      setTimeout(showReveal, hold);
     }
   } else {
     reelName.update(now, dt); reelAnimal.update(now, dt);

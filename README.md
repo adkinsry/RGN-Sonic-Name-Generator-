@@ -35,7 +35,7 @@ It is crude and knows it: sex jokes, prank names and bios that admit they were g
 
 ## The freak spin
 
-One spin in a hundred, in either mode, is a freak: the screen goes to red alarm stripes with **FREAK INCOMING** and the `freak` sound, then the reels run on gross pools (Dingleberry the Tapeworm, Moist Melvin the Blobfish; the animals are real) with everything gold turned red. The reveal adds a bio ("Wikipedia has pictures. Please don't."), gives 666 points instead of 1000, and takes all your rings, because a freak counts as a hit. Open the page with `?freak` on the URL to force the next spin, for showing it off. The 65 freak species were checked against the MediaWiki API on 2026-10-15.
+One spin in a hundred, in either mode, is a freak: the screen goes to red alarm stripes with **FREAK INCOMING** and the `freak` sound, then the reels run on gross pools (Dingleberry the Tapeworm, Moist Melvin the Blobfish; the animals are real) with everything gold turned red. The reveal adds a bio ("Wikipedia has pictures. Please don't."), gives 666 points instead of 1000, and takes all your rings, because a freak counts as a hit. With the drowning countdown embedded as `freak`, the spin holds until the countdown runs out and the reveal lands on the `freakReveal` sting. Open the page with `?freak` on the URL to force the next spin, for showing it off. The 65 freak species were checked against the MediaWiki API on 2026-10-15.
 
 ## Fan art for the intro
 
@@ -81,7 +81,8 @@ Put a file named after its cue in `assets/sounds/` (MP3, WAV, OGG or M4A), for e
 | `reelStop` | each reel stops | −26 dBFS |
 | `ring` | the ring burst on the reveal (7 times) | −26 dBFS |
 | `jingle` | the act-clear fanfare on the reveal | −18 dBFS |
-| `freak` | the "FREAK INCOMING" alarm before a freak spin (the Sonic time-over sting fits here) | −20 dBFS |
+| `freak` | the "FREAK INCOMING" alarm; a clip longer than 4 s (the drowning countdown) keeps playing through the spin, and the reveal waits for it to end | −20 dBFS |
+| `freakReveal` | the freak reveal itself (the death sting), in place of the fanfare and ring burst | −18 dBFS |
 
 To turn a cue off entirely, add an empty file named `<cue>.silent` (for example `assets/sounds/whoosh.silent`) and run `npm run embed-assets`. Short, dry clips work best for `type`, `tick` and `reelStop`; they play many times in a row. The `ring` cue normally fires seven times for a burst; a ring clip longer than 0.4 s plays once instead.
 
