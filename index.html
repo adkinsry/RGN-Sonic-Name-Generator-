@@ -733,6 +733,7 @@ const pickFrom = (a) => a[rand(a.length)];
 const FREAK_ODDS = 20;
 let freakSpin = false; // true while the reels are filled from the gross pools
 let forceFreak = new URLSearchParams(location.search).has("freak"); // ?freak forces the next spin, for showing it off
+const noFreak = new URLSearchParams(location.search).has("nofreak"); // ?nofreak rules random freaks out, for the tests
 const NAMES_GROSS = ["Mildred", "Gertrude", "Eustace", "Ethelred", "Ebenezer", "Bartholomew", "Hortense", "Ignatius", "Mortimer", "Agnes", "Cornelius", "Phineas", "Wilhelmina", "Beulah", "Ezekiel", "Thaddeus", "Prudence", "Dorcas", "Hepzibah", "Mehitabel", "Zebulon", "Obadiah", "Jedediah", "Lavinia", "Euphemia", "Griselda", "Hildegard", "Myrtle", "Bertha", "Gladys", "Edna", "Norbert", "Cuthbert", "Aloysius", "Percival", "Reginald", "Lucretia", "Philomena", "Winifred", "Ermintrude", "Bathsheba", "Jemima", "Erasmus", "Ichabod", "Lemuel", "Mordecai", "Nehemiah", "Wilbur", "Horace", "Dudley", "Great-Aunt Mildred", "Sir Bartholomew", "Dame Hortense", "Reverend Ezekiel", "Uncle Cornelius", "Grandma Gertrude", "Little Agnes", "Lady Wilhelmina", "Lord Percival", "Princess Ermintrude", "Master Aloysius", "Sister Prudence", "Professor Ignatius", "Madame Lucretia", "Young Ebenezer", "Baron von Mortimer", "Nana Beulah", "Cousin Jedediah", "Mrs. Thaddeus Pembrook", "Euphemia the Third"];
 const ANIMALS_GROSS = ["Blobfish", "Hagfish", "Naked Mole-rat", "Sea Pig", "Botfly", "Tapeworm", "Leech", "Tick", "Bed Bug", "Dung Beetle", "Maggot", "Slug", "Lamprey", "Horsehair Worm", "Tongue-eating Louse", "Aye-aye", "Star-nosed Mole", "Surinam Toad", "Vulture", "Marabou Stork", "Sphynx Cat", "Cockroach", "Giant Isopod", "Candiru", "Hookworm", "Crab Louse", "Head Louse", "Goblin Shark", "Monkfish", "Velvet Worm", "Hellbender", "Bobbit Worm", "Proboscis Monkey", "Wrinkle-faced Bat", "Chinese Crested Dog", "Turkey Vulture", "Hyena", "Frilled Shark", "Stink Bug", "Bombardier Beetle", "Vampire Bat", "Pacu", "Ratfish", "Earwig", "Silverfish", "Mosquito", "Horsefly", "Screwworm", "Liver Fluke", "Guinea Worm", "Sea Lamprey", "Human Botfly", "Blob Sculpin", "Warthog", "Mudskipper", "Lungfish", "Dust Mite", "Eyelash Mite", "Flea", "Housefly", "Blowfly", "Sea Louse", "Fish Louse", "Ribbon Worm", "Hammerhead Worm"];
 const BIOS_GROSS = ["The 1 in 20. Congratulations, we guess.", "Smells exactly like it sounds.", "Do not touch. Do not look. Do not Google.", "Wikipedia has pictures. Please don't.", "Generated under protest.", "Took all your rings on the way in.", "Has a rash. The rash has a rash.", "Something is leaking and nobody will say what.", "Every zone has one. This is yours now.", "Comes with a smell. The smell is free.", "Not an original character. A condition.", "Lives in the drain of the Chemical Plant.", "Was the 'before' photo.", "Health inspector closed the whole zone.", "Dr. Robotnik tried to build one of these and quit."];
@@ -1245,7 +1246,7 @@ function pickDifferent(fn, avoid) {
 function spin() {
   audio();
   clearReveal();
-  const freak = forceFreak || rand(FREAK_ODDS) === 0;
+  const freak = forceFreak || (!noFreak && rand(FREAK_ODDS) === 0);
   forceFreak = false;
   if (freak) startFreakWarning(); else launchReels(false);
 }
