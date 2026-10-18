@@ -31,7 +31,7 @@ for (const [w, h] of sizes) {
   // The page must work offline: abort anything that is not the file itself.
   const net = [];
   await p.route("**/*", (r) => { if (r.request().url().startsWith("file:")) return r.continue(); net.push(r.request().url()); return r.abort(); });
-  await p.goto(page_url);
+  await p.goto(page_url + "?nofreak");
 
   // Press Start brings in the name card. Then an empty name is refused, and Space does not spin behind it.
   check(await p.$eval("#startForm", (f) => f.hidden), "name card showed before Press Start");
@@ -130,9 +130,10 @@ async function enterMachine(p, name = "Pat") {
     const raf = window.requestAnimationFrame.bind(window);
     window.requestAnimationFrame = (f) => { window.__raf++; return raf(f); };
   });
-  await p.goto(page_url);
+  await p.goto(page_url + "?nofreak");
   const revealShown = () => p.$eval("#reveal", (e) => !e.hidden);
-  const waitReveal = async () => { for (let i = 0; i < 180 && !(await revealShown()); i++) await p.waitForTimeout(50); return revealShown(); };
+  // Up to 20 s: headless frame rates can fall below 20 fps, and the reels run on capped frame time.
+  const waitReveal = async () => { for (let i = 0; i < 400 && !(await revealShown()); i++) await p.waitForTimeout(50); return revealShown(); };
   const framesIn = async (ms) => { const a = await p.evaluate(() => window.__raf); await p.waitForTimeout(ms); return (await p.evaluate(() => window.__raf)) - a; };
 
   // Enter during the intro skips straight to the button (checked inside enterMachine).
@@ -172,7 +173,7 @@ async function enterMachine(p, name = "Pat") {
   const p = await mctx.newPage();
   const errors = [];
   p.on("pageerror", (e) => errors.push(e.message));
-  await p.goto(page_url);
+  await p.goto(page_url + "?nofreak");
   check(await p.evaluate(() => matchMedia("(hover: none)").matches), "mobile emulation does not report hover: none");
   await p.tap("#pressStart");
   await p.waitForSelector("#nameInput:not([hidden])");
@@ -208,7 +209,7 @@ async function enterMachine(p, name = "Pat") {
   await p.setViewportSize({ width: 1280, height: 800 });
   const errors = [];
   p.on("pageerror", (e) => errors.push(e.message));
-  await p.goto(page_url);
+  await p.goto(page_url + "?nofreak");
   await p.click("#pressStart");
   await p.waitForSelector("#startForm:not([hidden])", { timeout: 2000 });
   await p.click("#modeDark");
@@ -320,7 +321,7 @@ async function enterMachine(p, name = "Pat") {
     await p.setViewportSize({ width: 1280, height: 800 });
     const errors = [];
     p.on("pageerror", (e) => errors.push(e.message));
-    await p.goto(pathToFileURL(join(dir, "index.html")).href);
+    await p.goto(pathToFileURL(join(dir, "index.html")).href + "?nofreak");
     await p.click("#pressStart");
     // The hero must not appear anywhere (card or background) before the intro's finale.
     const noEarlyHero = await p.waitForSelector("#nameInput", { timeout: 3000 }).then(() => p.evaluate(() =>
