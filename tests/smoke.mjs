@@ -239,6 +239,21 @@ async function enterMachine(p, name = "Pat") {
   check(rv.href.startsWith("https://en.wikipedia.org/wiki/"), `species link is ${rv.href}`);
   await p.click("#modeBtn");
   check(await p.evaluate(() => document.body.dataset.mode === "classic" && document.getElementById("modeBtn").textContent === "AFTER DARK: OFF"), "HUD button did not flip back to Classic");
+  // Next Player: back to an empty name card with the score cleared; a new name runs the intro again.
+  check(await p.isVisible("#nextBtn"), "Next Player button missing after the reveal");
+  await p.click("#nextBtn");
+  const np = await p.evaluate(() => ({
+    stage: document.body.dataset.stage, form: !document.getElementById("startForm").hidden,
+    name: document.getElementById("nameInput").value, score: document.getElementById("hudScore").textContent,
+    reveal: !document.getElementById("reveal").hidden, next: !document.getElementById("nextBtn").hidden,
+  }));
+  check(np.stage === "start" && np.form && np.name === "" && np.score === "0" && !np.reveal && !np.next, `Next Player state: ${JSON.stringify(np)}`);
+  await p.fill("#nameInput", "Jo");
+  await p.press("#nameInput", "Enter");
+  await p.waitForSelector("#createBtn.show", { timeout: 12000 });
+  await p.click("#createBtn");
+  await p.waitForSelector("#reveal:not([hidden])", { timeout: 15000 });
+  check(await p.evaluate(() => document.body.dataset.stage === "main" && document.getElementById("hudScore").textContent === "1000"), "second player's spin did not run from a fresh score");
   check(errors.length === 0, `page errors in After Dark: ${errors.join("; ")}`);
   await p.close();
 }

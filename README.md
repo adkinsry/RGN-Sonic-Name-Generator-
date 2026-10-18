@@ -16,7 +16,7 @@ The whole app is one self-contained file, `index.html` (~160 KB before you add y
 2. **Intro:** "Hey (Name), let's see your best Sonic fan art! Are you ready to meet your character?" types itself out while up to six fan-art cards spin out of the centre one at a time, growing, and land in free spots around the text; the next one leaves as the last one lands. It takes about 6.5 s; Enter, Space or a tap skips to the end. On short landscape phones only four cards fit.
 3. **Create My Character** appears. Pressing it spins both reels for about 5 seconds, Price-is-Right style. The name reel stops at 4.3 s and the species reel at 5.0 s.
 4. After 1.5 s of stillness, the name slams in with a ring burst, a ring chime, an act-clear fanfare, and pixel critters that hop around for about 10 s and then leave. Once everything settles the page stops animating, so it doesn't drain a phone battery while it sits open.
-5. Tap the species to open its Wikipedia article, which has a photo. **Copy name** and **Share** (on phones) appear under the result. **Create Another** spins again.
+5. Tap the species to open its Wikipedia article, which has a photo. **Copy name** and **Share** (on phones) appear under the result. **Create Another** spins again, and **Next Player** goes back to the name card with a fresh score for the next person (the mode stays as it is).
 
 Space bar spins on desktop and Esc closes the result. **SOUND: ON/OFF** mutes everything and remembers your choice.
 
@@ -35,7 +35,7 @@ It is crude and knows it: sex jokes, prank names and bios that admit they were g
 
 ## The freak spin
 
-One spin in a hundred, in either mode, is a freak: the screen goes to red alarm stripes with **FREAK INCOMING** and the `freak` sound, then the reels run on gross pools (Dingleberry the Tapeworm, Moist Melvin the Blobfish; the animals are real) with everything gold turned red. The reveal adds a bio ("Wikipedia has pictures. Please don't."), gives 666 points instead of 1000, and takes all your rings, because a freak counts as a hit. With the drowning countdown embedded as `freak`, the reels keep spinning until the countdown runs out, stop with it, and the reveal lands at once on the `freakReveal` sting. Open the page with `?freak` on the URL to force the next spin, for showing it off. The 65 freak species were checked against the MediaWiki API on 2026-10-15.
+One spin in twenty, in either mode, is a freak: the screen goes to red alarm stripes with **FREAK INCOMING** and the `freak` sound, then the reels run on gross pools (Dingleberry the Tapeworm, Moist Melvin the Blobfish; the animals are real) with everything gold turned red. The reveal adds a bio ("Wikipedia has pictures. Please don't."), gives 666 points instead of 1000, and takes all your rings, because a freak counts as a hit. With the drowning countdown embedded as `freak`, the reels spin at full speed until the countdown's last few seconds, land as it runs out, and the reveal follows at once on the `freakReveal` sting. Open the page with `?freak` on the URL to force the next spin, for showing it off. The 65 freak species were checked against the MediaWiki API on 2026-10-15.
 
 ## Fan art for the intro
 

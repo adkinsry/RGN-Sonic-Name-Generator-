@@ -223,6 +223,7 @@ body[data-mode="dark"] .mode-btn.on { background: var(--pink); color: var(--whit
   transition: transform .08s, box-shadow .08s;
 }
 .side:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--navy-deep); }
+.go.next { background: linear-gradient(#3C7CF0, var(--blue)); }
 .side.done { background: #0F5B21; }
 .go {
   font-family: var(--display); font-size: 24px; letter-spacing: .02em;
@@ -328,7 +329,7 @@ body[data-stage="intro"] .stage, body[data-stage="intro"] .controls { visibility
 @keyframes shake { 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); } }
 @keyframes fadeout { to { opacity: 0; } }
 
-/* ---------- Freak spin (1 in 100): alarm stripes, then everything gold turns red ---------- */
+/* ---------- Freak spin (1 in 20): alarm stripes, then everything gold turns red ---------- */
 .freak-warn {
   position: fixed; inset: 0; z-index: 38; display: grid; place-items: center; text-align: center;
   padding: 16px; box-sizing: border-box;
@@ -485,6 +486,7 @@ body {
 .go:active:not(:disabled) { transform: translate(4px, 4px); box-shadow: 2px 2px 0 var(--navy-deep); }
 body[data-mode="dark"] .go { background: var(--red); box-shadow: 6px 6px 0 var(--navy-deep); }
 body[data-mode="dark"] .go:active:not(:disabled) { box-shadow: 2px 2px 0 var(--navy-deep); }
+.go.next, body[data-mode="dark"] .go.next { background: var(--blue); }
 .press-start { font-size: clamp(14px, 4vw, 22px); padding: 18px 30px; animation: pulse 1.2s steps(2) infinite; }
 @keyframes pulse { 50% { filter: brightness(1.2); } }
 .side, .mode-btn { font-size: 9px; line-height: 1.4; padding: 11px 14px; }
@@ -610,6 +612,7 @@ body[data-mode="dark"] .go:active:not(:disabled) { box-shadow: 2px 2px 0 var(--n
   <div class="controls">
     <div class="row-btns">
       <button class="go" id="go" type="button">Make a Character</button>
+      <button class="go next" id="nextBtn" type="button" hidden>Next Player</button>
       <button class="side" id="copyBtn" type="button" hidden>Copy name</button>
       <button class="side" id="shareBtn" type="button" hidden>Share</button>
     </div>
@@ -664,7 +667,7 @@ body[data-mode="dark"] .go:active:not(:disabled) { box-shadow: 2px 2px 0 var(--n
 <div class="freak-warn" id="freakWarn" hidden>
   <div>
     <div class="freak-text">FREAK<br>INCOMING</div>
-    <p class="freak-sub">1 IN 100 · HOLD ON TO YOUR RINGS</p>
+    <p class="freak-sub">1 IN 20 · HOLD ON TO YOUR RINGS</p>
   </div>
 </div>
 <canvas id="fx" aria-hidden="true"></canvas>
@@ -726,13 +729,13 @@ const wikiUrl = (name) => "https://en.wikipedia.org/wiki/" + encodeURIComponent(
 
 const rand = (n) => Math.floor(Math.random() * n);
 const pickFrom = (a) => a[rand(a.length)];
-// The freak spin: 1 in 100, in either mode. A gross name, a gross (real) animal, red everything.
-const FREAK_ODDS = 100;
+// The freak spin: 1 in 20, in either mode. A gross name, a gross (real) animal, red everything.
+const FREAK_ODDS = 20;
 let freakSpin = false; // true while the reels are filled from the gross pools
 let forceFreak = new URLSearchParams(location.search).has("freak"); // ?freak forces the next spin, for showing it off
 const NAMES_GROSS = ["Pus", "Phlegm", "Mucus", "Scab", "Crust", "Moist", "Boil", "Wart", "Loogie", "Booger", "Dingleberry", "Skidmark", "Toe Jam", "Earwax", "Dandruff", "Plaque", "Gingivitis", "Pinkeye", "Ringworm", "Fungus", "Chunky", "Leaky", "Oozy", "Crusty", "Sticky", "Stinky", "Swampy", "Rancid", "Curdled", "Lukewarm", "Gooch", "Discharge", "Smegma", "Bile", "Gristle", "Lint", "Sweaty Pete", "Greasy Gus", "Damp Dave", "Crusty Carl", "Musty Mike", "Clammy Kevin", "Soggy Steve", "Ingrown Ian", "Gassy Gary", "Moist Melvin", "Flaky Fiona", "Scabby Abby", "Mucus Marvin", "Bile Brenda", "Phlegmy Phil", "Chunky Chad", "Rashy Rhonda", "Weepy Wendy", "Blister Barb", "Pus-Pocket Paul", "Hairball Harold", "Backwash Becky", "Unwashed Wayne", "Yeasty Yvonne"];
 const ANIMALS_GROSS = ["Blobfish", "Hagfish", "Naked Mole-rat", "Sea Pig", "Botfly", "Tapeworm", "Leech", "Tick", "Bed Bug", "Dung Beetle", "Maggot", "Slug", "Lamprey", "Horsehair Worm", "Tongue-eating Louse", "Aye-aye", "Star-nosed Mole", "Surinam Toad", "Vulture", "Marabou Stork", "Sphynx Cat", "Cockroach", "Giant Isopod", "Candiru", "Hookworm", "Crab Louse", "Head Louse", "Goblin Shark", "Monkfish", "Velvet Worm", "Hellbender", "Bobbit Worm", "Proboscis Monkey", "Wrinkle-faced Bat", "Chinese Crested Dog", "Turkey Vulture", "Hyena", "Frilled Shark", "Stink Bug", "Bombardier Beetle", "Vampire Bat", "Pacu", "Ratfish", "Earwig", "Silverfish", "Mosquito", "Horsefly", "Screwworm", "Liver Fluke", "Guinea Worm", "Sea Lamprey", "Human Botfly", "Blob Sculpin", "Warthog", "Mudskipper", "Lungfish", "Dust Mite", "Eyelash Mite", "Flea", "Housefly", "Blowfly", "Sea Louse", "Fish Louse", "Ribbon Worm", "Hammerhead Worm"];
-const BIOS_GROSS = ["The 1 in 100. Congratulations, we guess.", "Smells exactly like it sounds.", "Do not touch. Do not look. Do not Google.", "Wikipedia has pictures. Please don't.", "Generated under protest.", "Took all your rings on the way in.", "Has a rash. The rash has a rash.", "Something is leaking and nobody will say what.", "Every zone has one. This is yours now.", "Comes with a smell. The smell is free.", "Not an original character. A condition.", "Lives in the drain of the Chemical Plant.", "Was the 'before' photo.", "Health inspector closed the whole zone.", "Dr. Robotnik tried to build one of these and quit."];
+const BIOS_GROSS = ["The 1 in 20. Congratulations, we guess.", "Smells exactly like it sounds.", "Do not touch. Do not look. Do not Google.", "Wikipedia has pictures. Please don't.", "Generated under protest.", "Took all your rings on the way in.", "Has a rash. The rash has a rash.", "Something is leaking and nobody will say what.", "Every zone has one. This is yours now.", "Comes with a smell. The smell is free.", "Not an original character. A condition.", "Lives in the drain of the Chemical Plant.", "Was the 'before' photo.", "Health inspector closed the whole zone.", "Dr. Robotnik tried to build one of these and quit."];
 const randomName = () => (freakSpin ? pickFrom(NAMES_GROSS) : mode === "dark" ? pickFrom(NAMES_DARK) : pickFrom(NAME_POOLS[rand(NAME_POOLS.length)]));
 const randomAnimal = () => (freakSpin ? pickFrom(ANIMALS_GROSS) : mode === "dark" ? pickFrom(ANIMALS_DARK) : pickFrom(Math.random() < COMMON_SHARE ? ANIMALS_COMMON : ANIMALS_ODD));
 
@@ -743,7 +746,9 @@ const NAME_ITEMS = 52;       // how many entries blip past
 const ANIMAL_ITEMS = 64;
 const HOLD_MS = 1500;        // both reels stationary before the reveal
 const FREAK_WARN_MS = 2600;  // "FREAK INCOMING" before a freak spin starts
-const FREAK_SETTLE_MS = 250; // a freak spin's reels stop this long before its countdown clip ends
+const FREAK_SETTLE_MS = 100; // a freak spin's reels land this long before its countdown clip ends
+const FREAK_BRAKE_MS = 1500; // a freak spin's short brake at the end of its full-speed run
+const NAME_GAP_MS = 600;     // the name reel lands this much before the species reel on a freak
 
 /* ================= Embedded assets ================= */
 // Written by `npm run embed-assets` from assets/sounds/ and assets/fanart/. Keep the two markers:
@@ -989,27 +994,36 @@ function makeReel(el, flipEl, blurDev, blurId, source, pan) {
       reel.offset = 6; reel.lastK = 6; reel.render(0);
     },
     current() { return reel.seq[mod(Math.round(reel.offset), reel.seq.length)]; },
-    start(target, items, dur, t0) {
+    // cruiseMs > 0 runs the reel at its opening top speed for that long before the slow-down, so
+    // a longer spin stays fast. ease is the slow-down's power: 4 is the normal long glide, 2 a
+    // short brake that keeps names visibly ticking almost to the end.
+    start(target, items, dur, t0, cruiseMs = 0, ease = 4) {
       const cur = reel.current();
       const pad = () => Array.from({ length: 4 }, source);
-      const middle = Array.from({ length: items - 1 }, source);
+      const topSpeed = ((items + 0.3) * ease) / (0.88 * dur); // items per ms at the start of the slow-down
+      const cruiseItems = cruiseMs > 0 ? Math.round(topSpeed * cruiseMs) : 0;
+      const middle = Array.from({ length: cruiseItems + items - 1 }, source);
       reel.seq = [...pad(), cur, ...middle, target, ...pad()];
       rows.forEach((r) => { r.idx = null; });
       reel.offset = 4; reel.lastK = 4; reel.prevK = 4; reel.prevOff = 4;
-      reel.anim = { from: 4, dist: items, t0, dur };
+      reel.anim = { from: 4, dist: items, t0, dur, cruiseMs: cruiseItems ? cruiseMs : 0, cruiseItems, ease };
     },
     // Fast start, long slow-down, a hair past the target, then settle back.
     update(now, dt) {
       if (!reel.anim) { reel.decayFlip(dt); return true; }
       const a = reel.anim;
-      const t = Math.min(1, (now - a.t0) / a.dur);
+      const elapsed = now - a.t0;
+      const base = a.from + a.cruiseItems; // where the slow-down starts
+      const t = Math.min(1, Math.max(0, elapsed - a.cruiseMs) / a.dur);
       const OVER = 0.3, SPLIT = 0.88;
-      if (t < SPLIT) {
-        const p = 1 - Math.pow(1 - t / SPLIT, 4);
-        reel.offset = a.from + (a.dist + OVER) * p;
+      if (elapsed < a.cruiseMs) {
+        reel.offset = a.from + a.cruiseItems * (elapsed / a.cruiseMs);
+      } else if (t < SPLIT) {
+        const p = 1 - Math.pow(1 - t / SPLIT, a.ease);
+        reel.offset = base + (a.dist + OVER) * p;
       } else {
         const q = (t - SPLIT) / (1 - SPLIT), s = q * q * (3 - 2 * q);
-        reel.offset = a.from + a.dist + OVER * (1 - s);
+        reel.offset = base + a.dist + OVER * (1 - s);
       }
       const k = Math.round(reel.offset);
       if (k !== reel.lastK) { reel.lastK = k; reel.flip = k > reel.prevK ? 26 : -18; tick(pan); }
@@ -1018,7 +1032,7 @@ function makeReel(el, flipEl, blurDev, blurId, source, pan) {
       reel.prevOff = reel.offset;
       reel.render(speed);
       reel.decayFlip(dt);
-      if (t >= 1) { reel.offset = a.from + a.dist; reel.anim = null; reel.render(0); sfx("reelStop", pan); return true; }
+      if (t >= 1) { reel.offset = base + a.dist; reel.anim = null; reel.render(0); sfx("reelStop", pan); return true; }
       return false;
     },
     settled() { return !reel.anim && Math.abs(reel.flip) < 0.05; },
@@ -1211,6 +1225,7 @@ const hudScore = document.getElementById("hudScore");
 const hudTime = document.getElementById("hudTime");
 const hudRings = document.getElementById("hudRings");
 const copyBtn = document.getElementById("copyBtn");
+const nextBtn = document.getElementById("nextBtn");
 const shareBtn = document.getElementById("shareBtn");
 const canShare = typeof navigator.share === "function";
 const tapWord = window.matchMedia("(hover: none)").matches ? "tap" : "click";
@@ -1236,13 +1251,14 @@ function spin() {
 }
 // The alarm before a freak spin: red stripes, the "freak" cue, then the reels start on their own.
 // A long embedded "freak" clip (the drowning countdown) is the clock: the reels keep spinning
-// until it ends, stop with it, and the reveal lands at once on the "freakReveal" sting. The
+// at full speed until its last seconds, land as it ends, and the reveal follows at once on the
+// "freakReveal" sting. The
 // built-in alarm has no such pull, so that spin keeps the normal timing.
 let freakSrc = null, freakEndsAt = 0;
 function startFreakWarning() {
   phase = "warning";
   go.disabled = true;
-  copyBtn.hidden = true; shareBtn.hidden = true;
+  copyBtn.hidden = true; shareBtn.hidden = true; nextBtn.hidden = true;
   document.body.dataset.freak = "1";
   freakWarn.hidden = false;
   freakSrc = sfx("freak") || null;
@@ -1257,18 +1273,23 @@ function launchReels(freak) {
   const now = performance.now();
   const bio = freak ? pickFrom(BIOS_GROSS) : mode === "dark" ? pickFrom(BIOS_DARK) : "";
   result = { name: pickDifferent(randomName, reelName.current()), animal: pickDifferent(randomAnimal, reelAnimal.current()), bio, freak };
-  // A freak spin with a countdown stretches to end with it, keeping the same tick rate and the
-  // same stagger between the two reels; the reveal follows at once.
-  const left = freak && freakEndsAt ? freakEndsAt - now - FREAK_SETTLE_MS : 0;
-  const animalMs = left > ANIMAL_SPIN_MS ? left : ANIMAL_SPIN_MS;
-  const nameMs = animalMs - (ANIMAL_SPIN_MS - NAME_SPIN_MS);
-  const scale = animalMs / ANIMAL_SPIN_MS;
-  reelName.start(result.name, Math.round(NAME_ITEMS * scale), nameMs, now);
-  reelAnimal.start(result.animal, Math.round(ANIMAL_ITEMS * scale), animalMs, now);
+  // A freak spin with a countdown runs both reels flat out until just before the clip ends, then
+  // brakes hard so the species lands with the last note; the reveal follows at once. The name
+  // reel lands a beat earlier, as in a normal spin.
+  const cruise = freak && freakEndsAt ? freakEndsAt - now - FREAK_SETTLE_MS - FREAK_BRAKE_MS : 0;
+  if (cruise > NAME_GAP_MS) {
+    const top = ((ANIMAL_ITEMS + 0.3) * 4) / (0.88 * ANIMAL_SPIN_MS); // a normal spin's top speed
+    const brakeItems = Math.round((top * 0.88 * FREAK_BRAKE_MS) / 2);  // distance to brake from it
+    reelName.start(result.name, brakeItems, FREAK_BRAKE_MS, now, cruise - NAME_GAP_MS, 2);
+    reelAnimal.start(result.animal, brakeItems, FREAK_BRAKE_MS, now, cruise, 2);
+  } else {
+    reelName.start(result.name, NAME_ITEMS, NAME_SPIN_MS, now);
+    reelAnimal.start(result.animal, ANIMAL_ITEMS, ANIMAL_SPIN_MS, now);
+  }
   spinStart = now;
   phase = "spinning";
   go.disabled = true;
-  copyBtn.hidden = true; shareBtn.hidden = true;
+  copyBtn.hidden = true; shareBtn.hidden = true; nextBtn.hidden = true;
   machine.classList.remove("won");
   machine.classList.add("live");
   announce.textContent = "Spinning";
@@ -1332,6 +1353,7 @@ function showReveal() {
   go.textContent = "Create Another";
   go.disabled = false;
   copyBtn.hidden = false; copyBtn.textContent = "Copy name"; copyBtn.classList.remove("done");
+  nextBtn.hidden = false;
   shareBtn.hidden = !canShare;
   go.focus({ preventScroll: true });
   freakSpin = false; // later idle fills come from the normal pools again
@@ -1803,6 +1825,28 @@ pressStart.addEventListener("click", () => {
   if (hasPointer) nameInput.focus({ preventScroll: true });
 });
 if (hasPointer) pressStart.focus({ preventScroll: true });
+
+// Next Player: back to the name card with a fresh score, keeping the mode and the sound on.
+nextBtn.addEventListener("click", () => {
+  if (stage !== "main" || phase === "warning" || phase === "spinning" || phase === "holding") return;
+  sfx("press");
+  clearReveal();
+  phase = "idle"; result = null;
+  score = 0; ringTotal = 0;
+  hudScore.textContent = "0"; hudRings.textContent = "0"; hudTime.textContent = "0:00";
+  machine.classList.remove("won", "live");
+  go.textContent = "Make a Character";
+  copyBtn.hidden = true; shareBtn.hidden = true; nextBtn.hidden = true;
+  reelName.setIdle(); reelAnimal.setIdle();
+  announce.textContent = "Next player";
+  nameInput.value = ""; startErr.textContent = ""; ageGate.hidden = true;
+  setStage("start");
+  startEl.hidden = false;
+  pressStart.hidden = true;
+  startForm.hidden = false;
+  startForm.classList.remove("in"); void startForm.offsetWidth; startForm.classList.add("in");
+  if (hasPointer) nameInput.focus({ preventScroll: true });
+});
 
 /* ================= Boot ================= */
 reelName.setIdle(); reelAnimal.setIdle();
