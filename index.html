@@ -1291,6 +1291,10 @@ function launchReels(freak) {
   }
   spinStart = now;
   phase = "spinning";
+  // Safety net: if the reels never report landing, reveal anyway a few seconds after they should have.
+  const id = ++spinId;
+  const expected = Math.max(ANIMAL_SPIN_MS, cruise + FREAK_BRAKE_MS) + HOLD_MS;
+  setTimeout(() => revealSpin(id), expected + 3000);
   go.disabled = true;
   copyBtn.hidden = true; shareBtn.hidden = true; nextBtn.hidden = true;
   machine.classList.remove("won");
@@ -1316,6 +1320,12 @@ function fitLine(el) {
   }
 }
 
+let spinId = 0;
+// Reveal spin `id` unless it has already been revealed, reset by Next Player, or replaced.
+function revealSpin(id) {
+  if (id === spinId && (phase === "spinning" || phase === "holding")) showReveal();
+}
+
 function showReveal() {
   phase = "revealed";
   machine.classList.remove("live");
@@ -1327,6 +1337,13 @@ function showReveal() {
   rvAnimal.href = wikiUrl(result.animal);
   rvAnimal.setAttribute("aria-label", `${result.animal}: open its Wikipedia article in a new tab`);
   reveal.hidden = false;
+  // Buttons first, so a failure in the effects below can't leave them disabled.
+  go.textContent = "Create Another";
+  go.disabled = false;
+  copyBtn.hidden = false; copyBtn.textContent = "Copy name"; copyBtn.classList.remove("done");
+  nextBtn.hidden = false;
+  shareBtn.hidden = !canShare;
+  go.focus({ preventScroll: true });
   // Restart the CSS entrance animations on every reveal.
   reveal.querySelectorAll(".rv-line, .rv-the, .rv-bio, .rv-hint, .scrim, .rays, .flash").forEach((n) => {
     n.style.animation = "none"; void n.offsetWidth; n.style.animation = "";
@@ -1353,12 +1370,6 @@ function showReveal() {
     for (let i = 0; i < bursts; i++) ring(t + i * 0.085, i % 2 ? 0.6 : -0.6);
   }
   announce.textContent = fullName() + (result.bio ? ". " + result.bio : "");
-  go.textContent = "Create Another";
-  go.disabled = false;
-  copyBtn.hidden = false; copyBtn.textContent = "Copy name"; copyBtn.classList.remove("done");
-  nextBtn.hidden = false;
-  shareBtn.hidden = !canShare;
-  go.focus({ preventScroll: true });
   freakSpin = false; // later idle fills come from the normal pools again
   kick();
 }
@@ -1396,7 +1407,13 @@ shareBtn.addEventListener("click", async () => {
 
 let running = false, lastFrame = 0;
 function kick() { if (!running) { running = true; lastFrame = performance.now(); requestAnimationFrame(frame); } }
+// One bad frame must not end the loop: a dead loop strands a spin with every button disabled.
 function frame(now) {
+  let more = true;
+  try { more = step(now); } catch (e) { console.error(e); }
+  if (more) requestAnimationFrame(frame); else running = false;
+}
+function step(now) {
   const dt = Math.min(0.05, (now - lastFrame) / 1000);
   lastFrame = now;
 
@@ -1411,7 +1428,8 @@ function frame(now) {
       machine.classList.remove("live");
       // A freak spin holds until its countdown clip has nearly run out.
       // A freak spin timed to its countdown reveals the moment the reels settle.
-      setTimeout(showReveal, result.freak && freakEndsAt ? FREAK_SETTLE_MS : HOLD_MS);
+      const id = spinId;
+      setTimeout(() => revealSpin(id), result.freak && freakEndsAt ? FREAK_SETTLE_MS : HOLD_MS);
     }
   } else {
     reelName.update(now, dt); reelAnimal.update(now, dt);
@@ -1427,8 +1445,7 @@ function frame(now) {
 
   // Keep animating while anything moves, then stop so an idle page costs nothing.
   // "holding" also stops here: showReveal() kicks the loop again.
-  if (reelsIdle && !rings.length && !critters.length) { running = false; return; }
-  requestAnimationFrame(frame);
+  return !(reelsIdle && !rings.length && !critters.length);
 }
 
 go.addEventListener("click", () => {
