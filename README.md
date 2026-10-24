@@ -27,7 +27,7 @@ The backdrop is an original drawing in the spirit of a 16-bit "green hill" stage
 A party setting. On the name card, tap **After Dark 18+**; it asks (with a straight face) whether you are 18, and **...no** keeps Classic. The HUD button **AFTER DARK: ON/OFF** flips it at any time, including between spins. In After Dark:
 
 - The sky goes night-purple and the buttons go pink.
-- Names are prank names and worse (Mike Oxlong, Tess Tickles, Two-Pump Tony, Dr. Spin Dash...).
+- Names are prank names and worse (Mike Oxlong, Blue Balls McGee, Two-Pump Tony, Blast Processing Brad...).
 - Every species is still a real animal; they are just the ones with unfortunate names (Booby, Great Tit, Slippery Dick, Sexy Shrimp...). The Wikipedia link still works, which is the joke. The 79 After Dark titles were checked against the MediaWiki API on 2026-10-15 (all but three, which only hit rate limits: Beaver, Booby and Cockatoo, whose articles are plainly named).
 - The reveal adds a one-line bio ("Gotta go fast. In bed. Unfortunately."). The bio is included when you share, not when you copy the name.
 
@@ -35,7 +35,7 @@ It is crude and knows it: sex jokes, prank names and bios that admit they were g
 
 ## The freak spin
 
-One spin in twenty, in either mode, is a freak: the screen goes to red alarm stripes with **FREAK INCOMING** and the `freak` sound, then the reels pair real, fussy, old-fashioned human names with gross animals (Great-Aunt Mildred the Tapeworm, Sir Bartholomew the Botfly; the animals are real) with everything gold turned red. The reveal adds a bio ("Wikipedia has pictures. Please don't."), gives 666 points instead of 1000, and takes all your rings, because a freak counts as a hit. With the drowning countdown embedded as `freak`, the reels spin at full speed until the countdown's last few seconds, land as it runs out, and the reveal follows at once on the `freakReveal` sting. Open the page with `?freak` on the URL to force the next spin, for showing it off. The 65 freak species were checked against the MediaWiki API on 2026-10-15.
+One spin in twenty, in either mode, is a freak: the screen goes to red alarm stripes with **FREAK INCOMING** and the `freak` sound, then the reels pair gross (real) animals with names that are as weird as they are, such as Uncle Wet Hands, Cornelius Fleshcrumb, Three Kids in a Coat or Kevin from Accounts, with everything gold turned red. The reveal adds a bio ("Wikipedia has pictures. Please don't."), gives 666 points instead of 1000, and takes all your rings, because a freak counts as a hit. With the drowning countdown embedded as `freak`, the reels spin at full speed until the countdown's last few seconds, land as it runs out, and the reveal follows at once on the `freakReveal` sting. Open the page with `?freak` on the URL to force the next spin, for showing it off. The 65 freak species were checked against the MediaWiki API on 2026-10-15.
 
 ## Fan art for the intro
 
